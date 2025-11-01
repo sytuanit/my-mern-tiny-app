@@ -1,3 +1,5 @@
+name: my-mern-tiny-app
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -78,10 +80,12 @@ services:
       KAFKA_BROKER: kafka:9093
       KAFKA_TOPIC: item-events
       KAFKA_GROUP_ID: my-tiny-app-consumer-group
+      MY_TINY_APP_API_URL: http://app:3000
       NODE_ENV: production
     depends_on:
       - mongodb
       - kafka
+      - app
     networks:
       - app-network
 

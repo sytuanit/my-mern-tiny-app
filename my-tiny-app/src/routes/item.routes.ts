@@ -18,11 +18,21 @@ export const itemRouter = Router();
 itemRouter.get('/', getAllItems);
 
 /**
- * @route GET /api/items/search?name=:name
- * @desc Get item by name (first match only)
+ * @route POST /api/items/search
+ * @desc Search item by name (first match only)
  * @access Public
+ * @body { name: string }
+ * @note Must be defined before POST / to avoid route conflict
  */
-itemRouter.get('/search', getItemByName);
+itemRouter.post('/search', getItemByName);
+
+/**
+ * @route POST /api/items
+ * @desc Create new item
+ * @access Public
+ * @note Must be defined after /search route
+ */
+itemRouter.post('/', createItem);
 
 /**
  * @route GET /api/items/:id
@@ -30,13 +40,6 @@ itemRouter.get('/search', getItemByName);
  * @access Public
  */
 itemRouter.get('/:id', getItemById);
-
-/**
- * @route POST /api/items
- * @desc Create new item
- * @access Public
- */
-itemRouter.post('/', createItem);
 
 /**
  * @route PUT /api/items/:id

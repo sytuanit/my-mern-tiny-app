@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { connectDatabase } from './config/database';
 import { initializeKafkaConsumer, disconnectKafkaConsumer } from './config/kafka';
 import { handleItemEvent } from './services/item-event-handler';
+import { itemRouter } from './routes/item.routes';
 
 dotenv.config();
 
@@ -14,6 +15,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/items', itemRouter);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
