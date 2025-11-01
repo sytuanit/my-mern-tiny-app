@@ -120,6 +120,22 @@ services:
     networks:
       - app-network
 
+  ui:
+    build:
+      context: ./my-tiny-app-ui
+      dockerfile: Dockerfile
+    container_name: my-tiny-app-ui
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      NODE_ENV: production
+    depends_on:
+      - app
+    networks:
+      - app-network
+
 volumes:
   mongodb_data:
 
