@@ -4,12 +4,20 @@ import dotenv from 'dotenv';
 import { connectDatabase } from './config/database';
 import { initializeKafkaConsumer, disconnectKafkaConsumer } from './config/kafka';
 import { handleItemEvent } from './services/item-event-handler';
-import { itemRouter } from './routes/item.routes';
+import { itemRouter } from './presentation/routes/item.routes';
+import { healthRouter } from './presentation/routes/health.routes';
+import { DIContainer } from './infrastructure/di/container';
 
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
+
+// Dependency Injection - Initialize DI container
+const diContainer = new DIContainer();
+
+// Make use cases available to controllers via app.locals
+app.locals.searchItemByNameUseCase = diContainer.searchItemByNameUseCase;
 
 // Middleware
 app.use(cors());
@@ -18,11 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/items', itemRouter);
-
-// Health check endpoint
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Consumer service is running' });
-});
+app.use('/health', healthRouter);
 
 // Start server
 const startServer = async (): Promise<void> => {
