@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Architecture Overview</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="architecture-overview">Architecture Overview</h1>
+<h1 id="-1-business-capabilities">🧭 1. Business Capabilities</h1>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Summary</th>
+<th>Entry Points</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Item Management</td>
+<td>Manage inventory items with CRUD operations. Allows users to create, read, update, and delete items with validation.</td>
+<td><code>GET /api/items</code>, <code>GET /api/items/:id</code>, <code>POST /api/items</code>, <code>PUT /api/items/:id</code>, <code>DELETE /api/items/:id</code></td>
+</tr>
+<tr>
+<td>Health Monitoring</td>
+<td>System health check endpoint for monitoring and load balancer health checks.</td>
+<td><code>GET /health</code></td>
+</tr>
+</tbody>
+</table>
+<h1 id="-2-entrypoints">🚪 2. Entrypoints</h1>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Identifier</th>
+<th>Handler (file#fn)</th>
+<th>Capability</th>
+<th>Business Intent</th>
+<th>Validations</th>
+<th>Core logic (file#fn)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTTP</td>
+<td>GET /api/items</td>
+<td>src/routes/item.routes.ts<br>&gt; <code>#itemRouter.get('/', getAllItems)</code></td>
+<td>Item Management</td>
+<td>Retrieve all items from inventory, sorted by creation date (newest first) for user browsing</td>
+<td>None (public endpoint)</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#getAllItems</code></td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>GET /api/items/:id</td>
+<td>src/routes/item.routes.ts<br>&gt; <code>#itemRouter.get('/:id', getItemById)</code></td>
+<td>Item Management</td>
+<td>Get detailed information about a specific item by ID for user viewing</td>
+<td>MongoDB ObjectId format validation (implicit via mongoose)</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#getItemById</code></td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>POST /api/items</td>
+<td>src/routes/item.routes.ts<br>&gt; <code>#itemRouter.post('/', createItem)</code></td>
+<td>Item Management</td>
+<td>Create a new item in inventory with validated data</td>
+<td>Zod schema validation: name (required, 1-100 chars), description (optional, max 500 chars), price (optional, positive number), quantity (optional, non-negative integer)</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#createItem</code></td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>PUT /api/items/:id</td>
+<td>src/routes/item.routes.ts<br>&gt; <code>#itemRouter.put('/:id', updateItem)</code></td>
+<td>Item Management</td>
+<td>Update existing item information, supports partial updates</td>
+<td>Zod schema validation (partial): same as POST but all fields optional, MongoDB ObjectId format</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#updateItem</code></td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>DELETE /api/items/:id</td>
+<td>src/routes/item.routes.ts<br>&gt; <code>#itemRouter.delete('/:id', deleteItem)</code></td>
+<td>Item Management</td>
+<td>Remove item from inventory by ID</td>
+<td>MongoDB ObjectId format validation (implicit via mongoose)</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#deleteItem</code></td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>GET /health</td>
+<td>src/index.ts<br>&gt; <code>#app.get('/health', (_req, res) =&gt; {...})</code></td>
+<td>Health Monitoring</td>
+<td>Provide server health status for monitoring systems and load balancers</td>
+<td>None</td>
+<td>src/index.ts<br>&gt; <code>#app.get('/health', ...)</code></td>
+</tr>
+</tbody>
+</table>
+<h1 id="️-3-data-touchpoints">🗄️ 3. Data Touchpoints</h1>
+<table>
+<thead>
+<tr>
+<th>Entity/Model</th>
+<th>Read/Write</th>
+<th>Where (file#fn)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Item (items collection)</td>
+<td>Read</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#getAllItems</code><br>src/controllers/item.controller.ts<br>&gt; <code>#getItemById</code></td>
+<td>Mongoose query: <code>Item.find().sort({ createdAt: -1 })</code> - Retrieves all items sorted by creation date descending</td>
+</tr>
+<tr>
+<td>Item (items collection)</td>
+<td>Read</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#getItemById</code></td>
+<td>Mongoose query: <code>Item.findById(id)</code> - Retrieves single item by MongoDB ObjectId</td>
+</tr>
+<tr>
+<td>Item (items collection)</td>
+<td>Write</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#createItem</code></td>
+<td>Mongoose operation: <code>new Item(itemData).save()</code> - Creates new document with timestamps (createdAt, updatedAt)</td>
+</tr>
+<tr>
+<td>Item (items collection)</td>
+<td>Write</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#updateItem</code></td>
+<td>Mongoose operation: <code>Item.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })</code> - Updates document and returns updated version, automatically updates updatedAt timestamp</td>
+</tr>
+<tr>
+<td>Item (items collection)</td>
+<td>Write</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#deleteItem</code></td>
+<td>Mongoose operation: <code>Item.findByIdAndDelete(id)</code> - Permanently removes document from collection</td>
+</tr>
+</tbody>
+</table>
+<h1 id="-4-external-integrations">🌐 4. External Integrations</h1>
+<table>
+<thead>
+<tr>
+<th>Target</th>
+<th>Called From (file#fn)</th>
+<th>Payload (brief)</th>
+<th>Retries/Timeouts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MongoDB Database</td>
+<td>src/config/database.ts<br>&gt; <code>#connectDatabase</code></td>
+<td>Connection string: <code>mongodb://mongodb:27017/my-tiny-app</code> (or from env MONGODB_URI)</td>
+<td>No explicit retry mechanism, throws error on connection failure. Default Mongoose connection timeout applies</td>
+</tr>
+<tr>
+<td>MongoDB Database (items collection)</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#getAllItems</code></td>
+<td>Query: <code>Item.find().sort({ createdAt: -1 })</code></td>
+<td>Mongoose default query timeout (30s)</td>
+</tr>
+<tr>
+<td>MongoDB Database (items collection)</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#getItemById</code></td>
+<td>Query: <code>Item.findById(id)</code></td>
+<td>Mongoose default query timeout (30s)</td>
+</tr>
+<tr>
+<td>MongoDB Database (items collection)</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#createItem</code></td>
+<td>Write: <code>new Item(itemData).save()</code></td>
+<td>Mongoose default write timeout (30s)</td>
+</tr>
+<tr>
+<td>MongoDB Database (items collection)</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#updateItem</code></td>
+<td>Write: <code>Item.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })</code></td>
+<td>Mongoose default write timeout (30s)</td>
+</tr>
+<tr>
+<td>MongoDB Database (items collection)</td>
+<td>src/controllers/item.controller.ts<br>&gt; <code>#deleteItem</code></td>
+<td>Write: <code>Item.findByIdAndDelete(id)</code></td>
+<td>Mongoose default write timeout (30s)</td>
+</tr>
+</tbody>
+</table>
+
+            
+            
+        </body>
+        </html>

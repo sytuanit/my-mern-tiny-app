@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Libraries Usage Overview</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="libraries-usage-overview">Libraries Usage Overview</h1>
+<h1 id="-1-dependency-summary">📦 1. Dependency Summary</h1>
+<h2 id="web--api-frameworks">Web / API Frameworks</h2>
+<table>
+<thead>
+<tr>
+<th>Library / Module</th>
+<th>Purpose</th>
+<th>Where Used (files or packages)</th>
+<th>Key Functions / Imports</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>express v4.18.2</td>
+<td>Web framework for building REST API endpoints and middleware</td>
+<td><code>src/index.ts</code>, <code>src/routes/item.routes.ts</code>, <code>src/controllers/item.controller.ts</code></td>
+<td><code>express()</code>, <code>Application</code>, <code>Router()</code>, <code>Request</code>, <code>Response</code>, <code>app.use()</code>, <code>app.get()</code>, <code>router.get()</code>, <code>router.post()</code>, <code>router.put()</code>, <code>router.delete()</code>, <code>express.json()</code>, <code>express.urlencoded()</code></td>
+<td><strong>Core</strong> - Essential for all HTTP routing and request handling. Used throughout the application for API endpoints</td>
+</tr>
+<tr>
+<td>cors v2.8.5</td>
+<td>Cross-Origin Resource Sharing middleware to enable API access from different domains</td>
+<td><code>src/index.ts</code></td>
+<td><code>cors()</code>, <code>app.use(cors())</code></td>
+<td><strong>Core</strong> - Required for web frontend integration. Applied globally to all routes</td>
+</tr>
+</tbody>
+</table>
+<h2 id="database--orm">Database / ORM</h2>
+<table>
+<thead>
+<tr>
+<th>Library / Module</th>
+<th>Purpose</th>
+<th>Where Used (files or packages)</th>
+<th>Key Functions / Imports</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mongoose v8.0.3</td>
+<td>MongoDB ODM (Object Document Mapper) for schema definition, validation, and queries</td>
+<td><code>src/config/database.ts</code>, <code>src/models/item.model.ts</code></td>
+<td><code>mongoose.connect()</code>, <code>mongoose.model()</code>, <code>Schema</code>, <code>Document</code>, <code>model.find()</code>, <code>model.findById()</code>, <code>model.findByIdAndUpdate()</code>, <code>model.findByIdAndDelete()</code>, <code>new model().save()</code></td>
+<td><strong>Core</strong> - Central to all data persistence. Used for connection management, schema definition, and all database operations (CRUD)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="configuration--utilities">Configuration / Utilities</h2>
+<table>
+<thead>
+<tr>
+<th>Library / Module</th>
+<th>Purpose</th>
+<th>Where Used (files or packages)</th>
+<th>Key Functions / Imports</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dotenv v16.3.1</td>
+<td>Loads environment variables from .env file into process.env</td>
+<td><code>src/index.ts</code></td>
+<td><code>dotenv.config()</code></td>
+<td><strong>Peripheral</strong> - Used once at application startup to load configuration (PORT, MONGODB_URI)</td>
+</tr>
+<tr>
+<td>zod v3.22.4</td>
+<td>Runtime TypeScript-first schema validation library for input validation</td>
+<td><code>src/models/item.model.ts</code>, <code>src/controllers/item.controller.ts</code></td>
+<td><code>z.object()</code>, <code>z.string()</code>, <code>z.number()</code>, <code>z.infer&lt;&gt;</code>, <code>.safeParse()</code>, <code>.partial()</code></td>
+<td><strong>Core</strong> - Critical for input validation on POST and PUT endpoints. Prevents invalid data from reaching database</td>
+</tr>
+</tbody>
+</table>
+<h2 id="unused-dependencies">Unused Dependencies</h2>
+<table>
+<thead>
+<tr>
+<th>Library / Module</th>
+<th>Purpose</th>
+<th>Where Used (files or packages)</th>
+<th>Key Functions / Imports</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lodash v4.17.21</td>
+<td>Utility library for array, object, and function manipulation</td>
+<td><strong>Not imported anywhere</strong></td>
+<td>N/A</td>
+<td><strong>Unused</strong> - Listed in dependencies but never imported. Can be safely removed to reduce bundle size</td>
+</tr>
+</tbody>
+</table>
+<h2 id="development-dependencies">Development Dependencies</h2>
+<table>
+<thead>
+<tr>
+<th>Library / Module</th>
+<th>Purpose</th>
+<th>Where Used (files or packages)</th>
+<th>Key Functions / Imports</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>typescript v5.3.3</td>
+<td>TypeScript compiler for type checking and transpilation</td>
+<td>Build-time (<code>npm run build</code>)</td>
+<td>Compiler configuration via <code>tsconfig.json</code></td>
+<td><strong>Build Tool</strong> - Compiles TypeScript to JavaScript during build process</td>
+</tr>
+<tr>
+<td>ts-node-dev v2.0.0</td>
+<td>TypeScript execution and hot-reload for development</td>
+<td>Development scripts (<code>npm run dev</code>)</td>
+<td>Runs <code>src/index.ts</code> directly with auto-restart on file changes</td>
+<td><strong>Dev Tool</strong> - Development-only, not included in production build</td>
+</tr>
+<tr>
+<td>@types/express v4.17.21</td>
+<td>TypeScript type definitions for Express</td>
+<td>Type checking in <code>src/index.ts</code>, <code>src/routes/item.routes.ts</code>, <code>src/controllers/item.controller.ts</code></td>
+<td>Provides types: <code>Application</code>, <code>Request</code>, <code>Response</code>, <code>Router</code></td>
+<td><strong>Type Definitions</strong> - Enables TypeScript intellisense and type checking for Express</td>
+</tr>
+<tr>
+<td>@types/node v20.10.5</td>
+<td>TypeScript type definitions for Node.js built-in modules</td>
+<td>Type checking globally</td>
+<td>Provides types for Node.js APIs (e.g., <code>process.env</code>)</td>
+<td><strong>Type Definitions</strong> - Required for TypeScript compilation</td>
+</tr>
+<tr>
+<td>@types/cors v2.8.17</td>
+<td>TypeScript type definitions for CORS</td>
+<td>Type checking in <code>src/index.ts</code></td>
+<td>Provides types for <code>cors()</code> middleware</td>
+<td><strong>Type Definitions</strong> - Enables TypeScript support for cors library</td>
+</tr>
+<tr>
+<td>@types/lodash v4.14.202</td>
+<td>TypeScript type definitions for lodash</td>
+<td><strong>Not used</strong> (lodash is not imported)</td>
+<td>N/A</td>
+<td><strong>Unused</strong> - Can be removed along with lodash dependency</td>
+</tr>
+</tbody>
+</table>
+<h1 id="-2-core-vs-peripheral-libraries">🧭 2. Core vs Peripheral Libraries</h1>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Libraries</th>
+<th>Used In Packages</th>
+<th>Comment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Core</strong></td>
+<td>express, mongoose, zod</td>
+<td><code>src/index.ts</code>, <code>src/routes/</code>, <code>src/controllers/</code>, <code>src/models/</code>, <code>src/config/</code></td>
+<td><strong>Essential for runtime</strong> - Application cannot function without these. Express handles HTTP, Mongoose handles data persistence, Zod handles input validation. Tightly coupled to application architecture</td>
+</tr>
+<tr>
+<td><strong>Core</strong></td>
+<td>cors</td>
+<td><code>src/index.ts</code></td>
+<td><strong>Required for web integration</strong> - Necessary for frontend applications to access the API from different origins</td>
+</tr>
+<tr>
+<td><strong>Peripheral</strong></td>
+<td>dotenv</td>
+<td><code>src/index.ts</code></td>
+<td><strong>Configuration utility</strong> - Loads environment variables at startup. Could be replaced with direct process.env access but improves maintainability</td>
+</tr>
+<tr>
+<td><strong>Unused</strong></td>
+<td>lodash, @types/lodash</td>
+<td>None</td>
+<td><strong>Removable</strong> - No imports found. Safe to remove from dependencies</td>
+</tr>
+<tr>
+<td><strong>Build Tools</strong></td>
+<td>typescript, ts-node-dev</td>
+<td>Build and development scripts</td>
+<td><strong>Development only</strong> - Not bundled in production. Required for TypeScript compilation and dev workflow</td>
+</tr>
+<tr>
+<td><strong>Type Definitions</strong></td>
+<td>@types/express, @types/node, @types/cors</td>
+<td>Type checking globally</td>
+<td><strong>Compile-time only</strong> - Not included in runtime bundle. Required for TypeScript type safety</td>
+</tr>
+</tbody>
+</table>
+<h1 id="-3-observations">🔍 3. Observations</h1>
+<h2 id="core-tech-stack">Core Tech Stack</h2>
+<ul>
+<li><strong>express + mongoose + zod</strong> form the primary runtime stack:
+<ul>
+<li>Express provides HTTP server and routing</li>
+<li>Mongoose provides MongoDB data layer</li>
+<li>Zod provides runtime validation</li>
+<li>These three libraries are tightly integrated throughout the codebase</li>
+</ul>
+</li>
+</ul>
+<h2 id="redundant-or-unused-libraries">Redundant or Unused Libraries</h2>
+<ul>
+<li><strong>lodash v4.17.21</strong> - Listed in dependencies but never imported in any source file
+<ul>
+<li><strong>Recommendation</strong>: Remove from <code>package.json</code> to reduce bundle size and dependency overhead</li>
+<li><strong>@types/lodash v4.14.202</strong> - Also unused, should be removed with lodash</li>
+</ul>
+</li>
+</ul>
+<h2 id="version-status">Version Status</h2>
+<ul>
+<li>All used dependencies are on recent, stable versions:
+<ul>
+<li>express v4.18.2 (latest v4.x)</li>
+<li>mongoose v8.0.3 (latest major version)</li>
+<li>zod v3.22.4 (latest v3.x)</li>
+<li>dotenv v16.3.1 (latest)</li>
+<li>cors v2.8.5 (latest)</li>
+</ul>
+</li>
+<li>No deprecated libraries detected in the used dependencies</li>
+</ul>
+<h2 id="potential-simplifications">Potential Simplifications</h2>
+<ul>
+<li>
+<p><strong>Remove lodash</strong>: Since it's not used anywhere, removing it will:</p>
+<ul>
+<li>Reduce <code>node_modules</code> size</li>
+<li>Faster <code>npm install</code> times</li>
+<li>Clearer dependency footprint</li>
+<li>Remove security maintenance burden for unused code</li>
+</ul>
+</li>
+<li>
+<p><strong>Dependency consolidation</strong>: Current dependencies are minimal and well-focused. No obvious consolidation opportunities without losing functionality.</p>
+</li>
+</ul>
+<h2 id="architecture-notes">Architecture Notes</h2>
+<ul>
+<li><strong>Clean dependency footprint</strong>: Only 5 runtime dependencies (excluding unused lodash)</li>
+<li><strong>Type safety</strong>: Full TypeScript coverage with proper type definitions for all external libraries</li>
+<li><strong>No over-engineering</strong>: Each dependency serves a specific, necessary purpose</li>
+<li><strong>Build separation</strong>: Development tools are properly separated from runtime dependencies</li>
+</ul>
+
+            
+            
+        </body>
+        </html>

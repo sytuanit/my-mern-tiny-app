@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Libraries Usage Overview - my-tiny-app-consumer</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="libraries-usage-overview---my-tiny-app-consumer">Libraries Usage Overview - my-tiny-app-consumer</h1>
+<p>This document analyzes which libraries and dependencies declared in <code>package.json</code> are <strong>actually used</strong> in the codebase.</p>
+<hr>
+<h2 id="-1-dependency-summary">📦 1. Dependency Summary</h2>
+<h3 id="web--api-frameworks">Web / API Frameworks</h3>
+<table>
+<thead>
+<tr>
+<th>Library / Module</th>
+<th>Purpose</th>
+<th>Where Used (files or packages)</th>
+<th>Key Functions / Imports</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>express v4.18.2</td>
+<td>HTTP server framework for Node.js</td>
+<td><code>src/index.ts</code></td>
+<td><code>Application</code>, <code>express()</code>, <code>app.use()</code>, <code>app.get()</code>, <code>app.listen()</code>, <code>express.json()</code>, <code>express.urlencoded()</code></td>
+<td><strong>Core</strong> - Used for HTTP server and health check endpoint</td>
+</tr>
+<tr>
+<td>cors v2.8.5</td>
+<td>Cross-Origin Resource Sharing middleware</td>
+<td><code>src/index.ts</code></td>
+<td><code>cors()</code></td>
+<td><strong>Peripheral</strong> - Used as middleware for enabling CORS</td>
+</tr>
+</tbody>
+</table>
+<h3 id="database--orm">Database / ORM</h3>
+<table>
+<thead>
+<tr>
+<th>Library / Module</th>
+<th>Purpose</th>
+<th>Where Used (files or packages)</th>
+<th>Key Functions / Imports</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mongoose v8.0.3</td>
+<td>MongoDB object modeling for Node.js</td>
+<td><code>src/config/database.ts</code>, <code>src/models/consumed-item.model.ts</code></td>
+<td><code>mongoose.connect()</code>, <code>mongoose.model()</code>, <code>Document</code>, <code>Schema</code>, <code>model.findOneAndUpdate()</code>, <code>model.findOneAndDelete()</code></td>
+<td><strong>Core</strong> - Essential for MongoDB connection and data modeling. Used for syncing consumed items to MongoDB</td>
+</tr>
+</tbody>
+</table>
+<h3 id="messaging--queue">Messaging / Queue</h3>
+<table>
+<thead>
+<tr>
+<th>Library / Module</th>
+<th>Purpose</th>
+<th>Where Used (files or packages)</th>
+<th>Key Functions / Imports</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>kafkajs v2.2.4</td>
+<td>Kafka client for Node.js</td>
+<td><code>src/config/kafka.ts</code></td>
+<td><code>Kafka</code>, <code>Consumer</code>, <code>EachMessagePayload</code>, <code>kafka.consumer()</code>, <code>consumer.connect()</code>, <code>consumer.subscribe()</code>, <code>consumer.run()</code>, <code>consumer.disconnect()</code></td>
+<td><strong>Core</strong> - Essential for consuming item events from Kafka topic. Primary purpose of this service</td>
+</tr>
+</tbody>
+</table>
+<h3 id="configuration--utilities">Configuration / Utilities</h3>
+<table>
+<thead>
+<tr>
+<th>Library / Module</th>
+<th>Purpose</th>
+<th>Where Used (files or packages)</th>
+<th>Key Functions / Imports</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dotenv v16.3.1</td>
+<td>Loads environment variables from .env file</td>
+<td><code>src/index.ts</code></td>
+<td><code>dotenv.config()</code></td>
+<td><strong>Core</strong> - Used for loading environment variables (MONGODB_URI, KAFKA_BROKER, etc.)</td>
+</tr>
+<tr>
+<td>zod v3.22.4</td>
+<td>TypeScript-first schema validation library</td>
+<td><code>src/config/kafka.ts</code>, <code>src/models/consumed-item.model.ts</code></td>
+<td><code>z.object()</code>, <code>z.enum()</code>, <code>z.string()</code>, <code>z.record()</code>, <code>z.unknown()</code>, <code>z.number()</code>, <code>z.date()</code>, <code>z.union()</code>, <code>z.transform()</code>, <code>z.infer()</code>, <code>safeParse()</code></td>
+<td><strong>Core</strong> - Used for runtime validation of Kafka event payloads and type inference. Critical for data validation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="unused-dependencies">Unused Dependencies</h3>
+<table>
+<thead>
+<tr>
+<th>Library / Module</th>
+<th>Listed in package.json</th>
+<th>Actually Used</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lodash v4.17.21</td>
+<td>✅ Yes</td>
+<td>❌ No</td>
+<td><strong>Should be removed</strong> - Not imported or used anywhere in the codebase</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="-2-core-vs-peripheral-libraries">🧭 2. Core vs Peripheral Libraries</h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Libraries</th>
+<th>Used In Packages</th>
+<th>Comment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Core</strong></td>
+<td><code>mongoose</code>, <code>kafkajs</code>, <code>zod</code>, <code>dotenv</code>, <code>express</code></td>
+<td><code>src/config/</code>, <code>src/models/</code>, <code>src/services/</code>, <code>src/index.ts</code></td>
+<td>These form the essential runtime stack. <code>mongoose</code> for MongoDB operations, <code>kafkajs</code> for event consumption (primary purpose), <code>zod</code> for event validation, <code>express</code> for HTTP health checks, <code>dotenv</code> for configuration</td>
+</tr>
+<tr>
+<td><strong>Peripheral</strong></td>
+<td><code>cors</code></td>
+<td><code>src/index.ts</code></td>
+<td>Optional middleware for CORS support. Could be removed if health checks don't need cross-origin access</td>
+</tr>
+<tr>
+<td><strong>Unused</strong></td>
+<td><code>lodash</code></td>
+<td>None</td>
+<td>Should be removed from dependencies to reduce bundle size</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="-3-observations">🔍 3. Observations</h2>
+<h3 id="core-tech-stack">Core Tech Stack</h3>
+<ul>
+<li><strong>Messaging</strong>: <code>kafkajs</code> - The primary purpose of this service is consuming Kafka events</li>
+<li><strong>Database</strong>: <code>mongoose</code> - Used for MongoDB operations on <code>consumed-items</code> collection</li>
+<li><strong>Validation</strong>: <code>zod</code> - Critical for validating Kafka event payloads at runtime</li>
+<li><strong>HTTP Server</strong>: <code>express</code> - Minimal usage, only for health check endpoint (<code>/health</code>)</li>
+</ul>
+<h3 id="unused--redundant-libraries">Unused / Redundant Libraries</h3>
+<ul>
+<li><strong><code>lodash</code></strong> - Declared in dependencies but never imported or used. <strong>Recommendation</strong>: Remove from <code>package.json</code> to reduce bundle size and dependency count.</li>
+</ul>
+<h3 id="version-status">Version Status</h3>
+<ul>
+<li>All libraries are using recent stable versions:
+<ul>
+<li><code>mongoose v8.0.3</code> - Latest major version</li>
+<li><code>kafkajs v2.2.4</code> - Stable version</li>
+<li><code>zod v3.22.4</code> - Current major version</li>
+<li><code>express v4.18.2</code> - Latest stable 4.x version</li>
+</ul>
+</li>
+</ul>
+<h3 id="potential-simplifications">Potential Simplifications</h3>
+<ol>
+<li><strong>Remove <code>lodash</code></strong>: Not used anywhere. Safe to remove.</li>
+<li><strong>Consider removing <code>cors</code></strong>: If health check endpoint doesn't need CORS (typically accessed internally), this dependency could be removed.</li>
+<li><strong>Minimal Express usage</strong>: Only used for a single health check endpoint. Consider if this is necessary or if a simpler approach would suffice (though Express overhead is minimal).</li>
+</ol>
+<h3 id="dev-dependencies-analysis">Dev Dependencies Analysis</h3>
+<table>
+<thead>
+<tr>
+<th>Dev Dependency</th>
+<th>Purpose</th>
+<th>Used In</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>typescript v5.3.3</code></td>
+<td>TypeScript compiler</td>
+<td>Build process (<code>npm run build</code>)</td>
+</tr>
+<tr>
+<td><code>ts-node-dev v2.0.0</code></td>
+<td>Development server with hot-reload</td>
+<td>Development script (<code>npm run dev</code>)</td>
+</tr>
+<tr>
+<td><code>@types/express v4.17.21</code></td>
+<td>TypeScript definitions for Express</td>
+<td>Compile-time type checking</td>
+</tr>
+<tr>
+<td><code>@types/node v20.10.5</code></td>
+<td>TypeScript definitions for Node.js</td>
+<td>Compile-time type checking</td>
+</tr>
+<tr>
+<td><code>@types/cors v2.8.17</code></td>
+<td>TypeScript definitions for CORS</td>
+<td>Compile-time type checking</td>
+</tr>
+<tr>
+<td><code>@types/lodash v4.14.202</code></td>
+<td>TypeScript definitions for Lodash</td>
+<td><strong>NOT NEEDED</strong> - Should be removed since <code>lodash</code> is unused</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependency-usage-summary">Dependency Usage Summary</h3>
+<p><strong>Total Runtime Dependencies</strong>: 7<br>
+<strong>Actually Used</strong>: 6 (86%)<br>
+<strong>Unused</strong>: 1 (<code>lodash</code>)</p>
+<p><strong>Total Dev Dependencies</strong>: 6<br>
+<strong>Actually Used</strong>: 5<br>
+<strong>Unused</strong>: 1 (<code>@types/lodash</code>)</p>
+<hr>
+<h2 id="-4-recommended-actions">📊 4. Recommended Actions</h2>
+<ol>
+<li>✅ <strong>Remove <code>lodash</code></strong> from <code>dependencies</code></li>
+<li>✅ <strong>Remove <code>@types/lodash</code></strong> from <code>devDependencies</code></li>
+<li>⚠️ <strong>Consider removing <code>cors</code></strong> if health checks don't require CORS (optional)</li>
+<li>✅ <strong>Run <code>npm install</code></strong> after removing unused dependencies to update <code>package-lock.json</code></li>
+</ol>
+<h3 id="cleanup-command">Cleanup Command</h3>
+<pre><code class="language-bash">npm uninstall lodash @types/lodash
+</code></pre>
+<hr>
+<p><strong>Report Generated</strong>: Based on actual source code analysis of <code>my-tiny-app-consumer</code><br>
+<strong>Analysis Date</strong>: Based on codebase structure<br>
+<strong>Total Source Files Analyzed</strong>: 5 TypeScript files in <code>src/</code> directory</p>
+
+            
+            
+        </body>
+        </html>
