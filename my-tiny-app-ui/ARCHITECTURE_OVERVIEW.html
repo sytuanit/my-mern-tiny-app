@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Architecture Overview&colon; my-tiny-app-ui</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="architecture-overview-my-tiny-app-ui">Architecture Overview: my-tiny-app-ui</h1>
+<h2 id="-1-business-capabilities">🧭 1. Business Capabilities</h2>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Summary</th>
+<th>Entry Points</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Item Management</td>
+<td>Provides a web interface for managing items with full CRUD operations (Create, Read, Update, Delete). Users can view all items, create new ones, edit existing items, and delete items.</td>
+<td><code>/</code> (Home page), Client-side form submissions, Button clicks</td>
+</tr>
+<tr>
+<td>Item Search</td>
+<td>Enables users to search for items by name. Returns a single matching item if found, or displays a &quot;not found&quot; message.</td>
+<td>Search form submission on <code>/</code></td>
+</tr>
+<tr>
+<td>Item Display</td>
+<td>Renders item information in card format with actions (edit, delete). Displays item details including name, description, price, quantity, and timestamps.</td>
+<td>Page load, Search results, CRUD operations</td>
+</tr>
+</tbody>
+</table>
+<h2 id="-2-entrypoints">🚪 2. Entrypoints</h2>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Identifier</th>
+<th>Handler (file#fn)</th>
+<th>Capability</th>
+<th>Business Intent</th>
+<th>Validations</th>
+<th>Core logic (file#fn)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTTP (Page)</td>
+<td>GET <code>/</code></td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#Home</code></td>
+<td>Item Management</td>
+<td>Display item management interface to users with search, create, edit, and list capabilities</td>
+<td>None (public page)</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#loadItems</code>, <code>#handleCreate</code>, <code>#handleUpdate</code>, <code>#handleDelete</code>, <code>#handleSearch</code></td>
+</tr>
+<tr>
+<td>Client Event</td>
+<td>Form Submit (Create)</td>
+<td><code>src/components/ItemForm.tsx</code><br>&gt; <code>#handleSubmit</code></td>
+<td>Item Management</td>
+<td>Allow users to create new items with name, description, price, and quantity</td>
+<td>Required: name field; Optional: description, price (min 0), quantity (min 0)</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#handleCreate</code> → <code>src/services/api.ts</code><br>&gt; <code>#createItem</code></td>
+</tr>
+<tr>
+<td>Client Event</td>
+<td>Form Submit (Update)</td>
+<td><code>src/components/ItemForm.tsx</code><br>&gt; <code>#handleSubmit</code></td>
+<td>Item Management</td>
+<td>Allow users to update existing items with modified information</td>
+<td>Required: name field; Optional: description, price (min 0), quantity (min 0)</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#handleUpdate</code> → <code>src/services/api.ts</code><br>&gt; <code>#updateItem</code></td>
+</tr>
+<tr>
+<td>Client Event</td>
+<td>Button Click (Delete)</td>
+<td><code>src/components/ItemCard.tsx</code><br>&gt; <code>onClick={onDelete}</code></td>
+<td>Item Management</td>
+<td>Allow users to delete items from the system with confirmation</td>
+<td>User confirmation dialog</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#handleDelete</code> → <code>src/services/api.ts</code><br>&gt; <code>#deleteItem</code></td>
+</tr>
+<tr>
+<td>Client Event</td>
+<td>Form Submit (Search)</td>
+<td><code>src/components/SearchForm.tsx</code><br>&gt; <code>#handleSubmit</code></td>
+<td>Item Search</td>
+<td>Enable users to find items by exact name match</td>
+<td>Non-empty search string (trimmed)</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#handleSearch</code> → <code>src/services/api.ts</code><br>&gt; <code>#searchItemByName</code></td>
+</tr>
+<tr>
+<td>Client Event</td>
+<td>Page Load</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>useEffect</code></td>
+<td>Item Management</td>
+<td>Automatically load and display all items when the page is first rendered</td>
+<td>None</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#loadItems</code> → <code>src/services/api.ts</code><br>&gt; <code>#getAllItems</code></td>
+</tr>
+<tr>
+<td>Client Event</td>
+<td>Button Click (Refresh)</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>onClick={loadItems}</code></td>
+<td>Item Management</td>
+<td>Allow users to manually refresh the item list</td>
+<td>None</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#loadItems</code> → <code>src/services/api.ts</code><br>&gt; <code>#getAllItems</code></td>
+</tr>
+<tr>
+<td>Client Event</td>
+<td>Button Click (Edit)</td>
+<td><code>src/components/ItemCard.tsx</code><br>&gt; <code>onClick={onEdit}</code></td>
+<td>Item Management</td>
+<td>Allow users to select an item for editing by populating the form</td>
+<td>Item must exist</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>setEditingItem</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="️-3-data-touchpoints">🗄️ 3. Data Touchpoints</h2>
+<table>
+<thead>
+<tr>
+<th>Entity/Model</th>
+<th>Read/Write</th>
+<th>Where (file#fn)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Item</code></td>
+<td>Read</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#loadItems</code>, <code>#handleSearch</code></td>
+<td>Fetched from external API via <code>apiService.getAllItems()</code> and <code>apiService.searchItemByName()</code>. State stored in React <code>useState&lt;Item[]&gt;</code></td>
+</tr>
+<tr>
+<td><code>Item</code></td>
+<td>Write (Create)</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#handleCreate</code></td>
+<td>Created via external API <code>apiService.createItem()</code>. New item added to local state array</td>
+</tr>
+<tr>
+<td><code>Item</code></td>
+<td>Write (Update)</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#handleUpdate</code></td>
+<td>Updated via external API <code>apiService.updateItem()</code>. Local state updated with response</td>
+</tr>
+<tr>
+<td><code>Item</code></td>
+<td>Write (Delete)</td>
+<td><code>src/app/page.tsx</code><br>&gt; <code>#handleDelete</code></td>
+<td>Deleted via external API <code>apiService.deleteItem()</code>. Removed from local state array</td>
+</tr>
+<tr>
+<td><code>ItemInput</code></td>
+<td>Read</td>
+<td><code>src/components/ItemForm.tsx</code><br>&gt; <code>#handleChange</code>, <code>#handleSubmit</code></td>
+<td>Form input data collected from user input fields. Validated client-side (name required)</td>
+</tr>
+<tr>
+<td><code>ItemInput</code></td>
+<td>Write</td>
+<td><code>src/components/ItemForm.tsx</code><br>&gt; <code>useEffect</code></td>
+<td>Form data initialized from <code>Item</code> when editing, or empty when creating. State managed via <code>useState</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Data Flow Notes:</strong></p>
+<ul>
+<li>All data persistence is handled by the external backend API (<code>NEXT_PUBLIC_API_URL</code>)</li>
+<li>Frontend maintains ephemeral state in React components using <code>useState</code> hooks</li>
+<li>No local database or persistent storage in the frontend application</li>
+<li>Data models defined in <code>src/types/item.ts</code> as TypeScript interfaces</li>
+</ul>
+<h2 id="-4-external-integrations">🌐 4. External Integrations</h2>
+<table>
+<thead>
+<tr>
+<th>Target</th>
+<th>Called From (file#fn)</th>
+<th>Payload (brief)</th>
+<th>Retries/Timeouts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backend API <code>GET /api/items/</code></td>
+<td><code>src/services/api.ts</code><br>&gt; <code>#getAllItems</code></td>
+<td>None</td>
+<td>Axios default (no explicit retry/timeout configured)</td>
+</tr>
+<tr>
+<td>Backend API <code>GET /api/items/:id</code></td>
+<td><code>src/services/api.ts</code><br>&gt; <code>#getItemById</code></td>
+<td>None (ID in URL path)</td>
+<td>Axios default; 404 returns null</td>
+</tr>
+<tr>
+<td>Backend API <code>POST /api/items/search</code></td>
+<td><code>src/services/api.ts</code><br>&gt; <code>#searchItemByName</code></td>
+<td><code>{ name: string }</code></td>
+<td>Axios default; 404 returns null</td>
+</tr>
+<tr>
+<td>Backend API <code>POST /api/items/</code></td>
+<td><code>src/services/api.ts</code><br>&gt; <code>#createItem</code></td>
+<td><code>ItemInput: { name, description?, price?, quantity? }</code></td>
+<td>Axios default; throws on failure</td>
+</tr>
+<tr>
+<td>Backend API <code>PUT /api/items/:id</code></td>
+<td><code>src/services/api.ts</code><br>&gt; <code>#updateItem</code></td>
+<td><code>Partial&lt;ItemInput&gt;</code> (ID in URL path)</td>
+<td>Axios default; 404 returns null</td>
+</tr>
+<tr>
+<td>Backend API <code>DELETE /api/items/:id</code></td>
+<td><code>src/services/api.ts</code><br>&gt; <code>#deleteItem</code></td>
+<td>None (ID in URL path)</td>
+<td>Axios default; 404 returns null</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Integration Configuration:</strong></p>
+<ul>
+<li>Base URL: <code>process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'</code></li>
+<li>API Client: Axios instance configured in <code>src/services/api.ts</code> constructor</li>
+<li>Headers: <code>Content-Type: application/json</code></li>
+<li>Error Handling: 404 errors return <code>null</code>; other errors are thrown and handled by components</li>
+<li>Response Format: Expects <code>ApiResponse&lt;T&gt;</code> wrapper with <code>{ success, data, message?, error? }</code></li>
+</ul>
+
+            
+            
+        </body>
+        </html>

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>LocalStack EC2 Deployment Guide</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="localstack-ec2-deployment-guide">LocalStack EC2 Deployment Guide</h1>
+<p>Hướng dẫn deploy <code>my-tiny-app</code> và <code>my-tiny-app-consumer</code> lên LocalStack EC2.</p>
+<h2 id="-prerequisites">📋 Prerequisites</h2>
+<ol>
+<li><strong>Docker &amp; Docker Compose</strong> - Đã cài đặt và đang chạy</li>
+<li><strong>Terraform</strong> - Version &gt;= 1.0</li>
+<li><strong>AWS CLI</strong> - Để kiểm tra và quản lý LocalStack resources</li>
+<li><strong>Make</strong> (optional) - Để sử dụng Makefile commands</li>
+</ol>
+<h2 id="-quick-start">🚀 Quick Start</h2>
+<h3 id="1-start-localstack-và-infrastructure">1. Start LocalStack và Infrastructure</h3>
+<p><strong>Linux/Mac:</strong></p>
+<pre><code class="language-bash">make localstack-up
+</code></pre>
+<p><strong>Windows (PowerShell):</strong></p>
+<pre><code class="language-powershell">.\Makefile.ps1 localstack<span class="hljs-literal">-up</span>
+</code></pre>
+<p>Hoặc thủ công:</p>
+<pre><code class="language-bash">docker-compose -f docker-compose.localstack.yml up -d localstack mongodb kafka zookeeper
+</code></pre>
+<h3 id="2-deploy-applications">2. Deploy Applications</h3>
+<p><strong>Linux/Mac:</strong></p>
+<pre><code class="language-bash">make deploy
+</code></pre>
+<p><strong>Windows (PowerShell):</strong></p>
+<pre><code class="language-powershell">.\Makefile.ps1 deploy
+</code></pre>
+<p>Hoặc thủ công:</p>
+<p><strong>Linux/Mac:</strong></p>
+<pre><code class="language-bash">bash scripts/deploy-to-localstack.sh
+</code></pre>
+<p><strong>Windows (PowerShell):</strong></p>
+<pre><code class="language-powershell">.\scripts\<span class="hljs-built_in">deploy-to</span><span class="hljs-literal">-localstack</span>.ps1
+</code></pre>
+<h2 id="-project-structure">📁 Project Structure</h2>
+<pre><code>.
+├── docker-compose.localstack.yml  # LocalStack và infrastructure services
+├── terraform/
+│   └── localstack/
+│       ├── main.tf               # Terraform configuration
+│       ├── variables.tf          # Variables
+│       └── outputs.tf            # Outputs
+├── scripts/
+│   ├── deploy-to-localstack.sh   # Deployment script (Linux/Mac)
+│   ├── deploy-to-localstack.ps1  # Deployment script (Windows)
+│   └── destroy-localstack.sh    # Cleanup script
+└── Makefile                      # Make commands
+</code></pre>
+<h2 id="-configuration">🔧 Configuration</h2>
+<h3 id="environment-variables">Environment Variables</h3>
+<p>Các biến môi trường có thể được cấu hình trong <code>terraform/localstack/variables.tf</code>:</p>
+<ul>
+<li><code>docker_registry</code>: Docker registry URL (mặc định: &quot;localhost&quot;)</li>
+<li><code>mongodb_uri</code>: MongoDB connection URI</li>
+<li><code>kafka_broker</code>: Kafka broker address</li>
+<li><code>app_api_url</code>: API URL cho consumer</li>
+</ul>
+<h3 id="localstack-endpoint">LocalStack Endpoint</h3>
+<p>LocalStack chạy trên port <code>4566</code>. Tất cả AWS API calls sẽ được route tới:</p>
+<pre><code>http://localhost:4566
+</code></pre>
+<h2 id="-architecture">📊 Architecture</h2>
+<pre><code>┌─────────────────────────────────────────────────┐
+│           LocalStack (AWS Services)             │
+│  ┌──────────────────────────────────────────┐   │
+│  │  EC2 Instance (my-tiny-app)             │   │
+│  │  - Runs Docker container                │   │
+│  │  - Port: 3000                           │   │
+│  └──────────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────┐   │
+│  │  EC2 Instance (my-tiny-app-consumer)     │   │
+│  │  - Runs Docker container                │   │
+│  │  - Port: 3001                           │   │
+│  └──────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────┘
+         │                    │
+         └────────────────────┘
+         │
+┌─────────────────────────────────────────────────┐
+│        Infrastructure Services                  │
+│  - MongoDB (Port: 27017)                        │
+│  - Kafka (Port: 9092/9093)                      │
+│  - Zookeeper (Port: 2181)                       │
+└─────────────────────────────────────────────────┘
+</code></pre>
+<h2 id="️-available-commands">🛠️ Available Commands</h2>
+<h3 id="make-commands-linuxmac">Make Commands (Linux/Mac)</h3>
+<pre><code class="language-bash">make <span class="hljs-built_in">help</span>              <span class="hljs-comment"># Hiển thị tất cả commands</span>
+make localstack-up     <span class="hljs-comment"># Start LocalStack và services</span>
+make localstack-down   <span class="hljs-comment"># Stop LocalStack và services</span>
+make build             <span class="hljs-comment"># Build Docker images</span>
+make deploy            <span class="hljs-comment"># Deploy to LocalStack EC2</span>
+make destroy           <span class="hljs-comment"># Destroy infrastructure</span>
+make clean             <span class="hljs-comment"># Clean up tất cả</span>
+make test-localstack   <span class="hljs-comment"># Test LocalStack connectivity</span>
+make list-instances    <span class="hljs-comment"># List EC2 instances</span>
+</code></pre>
+<h3 id="powershell-commands-windows">PowerShell Commands (Windows)</h3>
+<pre><code class="language-powershell">.\Makefile.ps1 help              <span class="hljs-comment"># Hiển thị tất cả commands</span>
+.\Makefile.ps1 localstack<span class="hljs-literal">-up</span>     <span class="hljs-comment"># Start LocalStack và services</span>
+.\Makefile.ps1 localstack<span class="hljs-literal">-down</span>   <span class="hljs-comment"># Stop LocalStack và services</span>
+.\Makefile.ps1 build             <span class="hljs-comment"># Build Docker images</span>
+.\Makefile.ps1 deploy             <span class="hljs-comment"># Deploy to LocalStack EC2</span>
+.\Makefile.ps1 destroy            <span class="hljs-comment"># Destroy infrastructure</span>
+.\Makefile.ps1 clean              <span class="hljs-comment"># Clean up tất cả</span>
+.\Makefile.ps1 <span class="hljs-built_in">test-localstack</span>    <span class="hljs-comment"># Test LocalStack connectivity</span>
+.\Makefile.ps1 list<span class="hljs-literal">-instances</span>     <span class="hljs-comment"># List EC2 instances</span>
+</code></pre>
+<h3 id="manual-commands">Manual Commands</h3>
+<h4 id="deploy">Deploy</h4>
+<pre><code class="language-bash">bash scripts/deploy-to-localstack.sh
+</code></pre>
+<h4 id="destroy">Destroy</h4>
+<pre><code class="language-bash">bash scripts/destroy-localstack.sh
+</code></pre>
+<h4 id="check-localstack-health">Check LocalStack Health</h4>
+<pre><code class="language-bash">curl http://localhost:4566/_localstack/health | jq .
+</code></pre>
+<h4 id="list-ec2-instances">List EC2 Instances</h4>
+<pre><code class="language-bash">aws --endpoint-url=http://localhost:4566 ec2 describe-instances
+</code></pre>
+<h4 id="describe-specific-instance">Describe Specific Instance</h4>
+<pre><code class="language-bash">aws --endpoint-url=http://localhost:4566 ec2 describe-instances \
+  --instance-ids &lt;instance-id&gt;
+</code></pre>
+<h2 id="-verification">🔍 Verification</h2>
+<h3 id="1-check-localstack-status">1. Check LocalStack Status</h3>
+<pre><code class="language-bash">curl http://localhost:4566/_localstack/health
+</code></pre>
+<h3 id="2-list-ec2-instances">2. List EC2 Instances</h3>
+<pre><code class="language-bash">make list-instances
+</code></pre>
+<h3 id="3-test-applications">3. Test Applications</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Test API</span>
+curl http://localhost:3000/api/items
+
+<span class="hljs-comment"># Test Consumer Health</span>
+curl http://localhost:3001/health
+</code></pre>
+<h2 id="-terraform-management">📝 Terraform Management</h2>
+<h3 id="initialize">Initialize</h3>
+<pre><code class="language-bash"><span class="hljs-built_in">cd</span> terraform/localstack
+terraform init
+</code></pre>
+<h3 id="plan">Plan</h3>
+<pre><code class="language-bash">terraform plan \
+  -var=<span class="hljs-string">&quot;docker_registry=localhost&quot;</span> \
+  -var=<span class="hljs-string">&quot;mongodb_uri=mongodb://mongodb:27017/my-tiny-app&quot;</span> \
+  -var=<span class="hljs-string">&quot;kafka_broker=kafka:9093&quot;</span> \
+  -var=<span class="hljs-string">&quot;app_api_url=http://app:3000&quot;</span>
+</code></pre>
+<h3 id="apply">Apply</h3>
+<pre><code class="language-bash">terraform apply -auto-approve \
+  -var=<span class="hljs-string">&quot;docker_registry=localhost&quot;</span> \
+  -var=<span class="hljs-string">&quot;mongodb_uri=mongodb://mongodb:27017/my-tiny-app&quot;</span> \
+  -var=<span class="hljs-string">&quot;kafka_broker=kafka:9093&quot;</span> \
+  -var=<span class="hljs-string">&quot;app_api_url=http://app:3000&quot;</span>
+</code></pre>
+<h3 id="destroy-1">Destroy</h3>
+<pre><code class="language-bash">terraform destroy -auto-approve \
+  -var=<span class="hljs-string">&quot;docker_registry=localhost&quot;</span> \
+  -var=<span class="hljs-string">&quot;mongodb_uri=mongodb://mongodb:27017/my-tiny-app&quot;</span> \
+  -var=<span class="hljs-string">&quot;kafka_broker=kafka:9093&quot;</span> \
+  -var=<span class="hljs-string">&quot;app_api_url=http://app:3000&quot;</span>
+</code></pre>
+<h2 id="️-important-notes">⚠️ Important Notes</h2>
+<ol>
+<li>
+<p><strong>LocalStack Limitations</strong>:</p>
+<ul>
+<li>LocalStack Community không hỗ trợ đầy đủ EC2. Cần LocalStack Pro để có EC2 support tốt hơn.</li>
+<li>Hoặc có thể sử dụng docker-compose để chạy containers trực tiếp (như hiện tại).</li>
+</ul>
+</li>
+<li>
+<p><strong>AMI IDs</strong>:</p>
+<ul>
+<li>LocalStack sử dụng dummy AMI IDs. Có thể sử dụng bất kỳ AMI ID nào (ví dụ: <code>ami-12345678</code>).</li>
+</ul>
+</li>
+<li>
+<p><strong>Network Configuration</strong>:</p>
+<ul>
+<li>EC2 instances trong LocalStack có thể không có public IP thực sự.</li>
+<li>Sử dụng docker-compose network để kết nối giữa các services.</li>
+</ul>
+</li>
+<li>
+<p><strong>Alternative Approach</strong>:</p>
+<ul>
+<li>Nếu LocalStack EC2 không hoạt động tốt, có thể sử dụng docker-compose để chạy containers như &quot;EC2 instances&quot; và chỉ dùng LocalStack cho các AWS services khác (S3, SQS, etc.).</li>
+</ul>
+</li>
+</ol>
+<h2 id="-alternative-docker-compose-only">🔄 Alternative: Docker Compose Only</h2>
+<p>Nếu LocalStack EC2 không đáp ứng nhu cầu, có thể chạy trực tiếp bằng docker-compose:</p>
+<pre><code class="language-bash">docker-compose -f docker-compose.localstack.yml up -d
+</code></pre>
+<p>Điều này sẽ chạy apps như containers thông thường, nhưng vẫn có LocalStack cho các AWS services khác.</p>
+<h2 id="-troubleshooting">🐛 Troubleshooting</h2>
+<h3 id="localstack-không-start">LocalStack không start</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Check logs</span>
+docker-compose -f docker-compose.localstack.yml logs localstack
+
+<span class="hljs-comment"># Restart</span>
+docker-compose -f docker-compose.localstack.yml restart localstack
+</code></pre>
+<h3 id="terraform-errors">Terraform errors</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Check Terraform state</span>
+<span class="hljs-built_in">cd</span> terraform/localstack
+terraform show
+
+<span class="hljs-comment"># Remove and reinitialize if needed</span>
+<span class="hljs-built_in">rm</span> -rf .terraform terraform.tfstate
+terraform init
+</code></pre>
+<h3 id="applications-không-connect-được">Applications không connect được</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Check network</span>
+docker network <span class="hljs-built_in">ls</span>
+docker network inspect my-mern-tiny-app-localstack_app-network
+
+<span class="hljs-comment"># Check container logs</span>
+docker logs my-tiny-app
+docker logs my-tiny-app-consumer
+</code></pre>
+<h2 id="-resources">📚 Resources</h2>
+<ul>
+<li><a href="https://docs.localstack.cloud/">LocalStack Documentation</a></li>
+<li><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs">Terraform AWS Provider</a></li>
+<li><a href="https://docs.docker.com/compose/">Docker Compose Documentation</a></li>
+</ul>
+
+            
+            
+        </body>
+        </html>
