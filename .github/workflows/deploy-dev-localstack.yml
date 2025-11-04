@@ -188,21 +188,37 @@ jobs:
 
       - name: Verify deployment
         shell: powershell
+        env:
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
         run: |
           Write-Host "Verifying deployment..."
           Start-Sleep -Seconds 10
           
-          # Check EC2 instances
-          aws --endpoint-url=${{ env.LOCALSTACK_ENDPOINT }} ec2 describe-instances `
-            --region ${{ env.AWS_REGION }} `
-            --filters "Name=tag:Name,Values=dev-my-tiny-app-server" `
-            --query "Reservations[*].Instances[*].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0]]" `
-            --output table
+          # Set AWS credentials for LocalStack
+          $env:AWS_ACCESS_KEY_ID = "test"
+          $env:AWS_SECRET_ACCESS_KEY = "test"
+          $env:AWS_DEFAULT_REGION = "${{ env.AWS_REGION }}"
           
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "⚠️ Warning: Could not verify EC2 instances"
-          } else {
-            Write-Host "✅ Deployment verification completed"
+          Write-Host "Checking EC2 instances..."
+          
+          # Check EC2 instances
+          try {
+            $result = aws --endpoint-url=${{ env.LOCALSTACK_ENDPOINT }} ec2 describe-instances `
+              --region ${{ env.AWS_REGION }} `
+              --filters "Name=tag:Name,Values=dev-my-tiny-app-server" `
+              --query "Reservations[*].Instances[*].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0]]" `
+              --output table
+            
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host $result
+              Write-Host "✅ Deployment verification completed"
+            } else {
+              Write-Host "⚠️ Warning: Could not verify EC2 instances (exit code: $LASTEXITCODE)"
+            }
+          } catch {
+            Write-Host "⚠️ Warning: Could not verify EC2 instances: $_"
           }
 
       - name: Deployment summary
