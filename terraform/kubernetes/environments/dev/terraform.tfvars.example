@@ -1,0 +1,66 @@
+# Example Terraform variables for Dev environment
+# Copy this file to terraform.tfvars and fill in your values
+
+environment = "dev"
+namespace   = "my-tiny-app-dev"
+name_prefix = "dev-"
+
+# Image configuration
+docker_registry  = "localhost"
+image_tag        = "dev-latest"
+image_pull_policy = "Never"
+
+# Replicas
+app_replicas      = 1
+consumer_replicas = 1
+ui_replicas       = 1
+
+# Resource limits (dev - smaller)
+app_resources = {
+  requests = {
+    memory = "64Mi"
+    cpu    = "50m"
+  }
+  limits = {
+    memory = "128Mi"
+    cpu    = "100m"
+  }
+}
+
+consumer_resources = {
+  requests = {
+    memory = "64Mi"
+    cpu    = "50m"
+  }
+  limits = {
+    memory = "128Mi"
+    cpu    = "100m"
+  }
+}
+
+ui_resources = {
+  requests = {
+    memory = "128Mi"
+    cpu    = "50m"
+  }
+  limits = {
+    memory = "256Mi"
+    cpu    = "100m"
+  }
+}
+
+# ConfigMap values
+config = {
+  NODE_ENV         = "development"
+  MONGODB_URI      = "mongodb://dev-mongodb:27017/my-tiny-app-dev"
+  KAFKA_BROKER     = "dev-kafka:9093"
+  KAFKA_TOPIC      = "item-events-dev"
+  KAFKA_GROUP_ID   = "my-tiny-app-consumer-group-dev"
+  APP_API_URL      = "http://dev-my-tiny-app-service:3000"
+  API_URL          = "http://dev-my-tiny-app-service:3000"
+}
+
+# Kubernetes context
+kubeconfig_path = ""
+kube_context    = "minikube"
+

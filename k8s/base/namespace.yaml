@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: my-tiny-app
-  labels:
-    name: my-tiny-app
-

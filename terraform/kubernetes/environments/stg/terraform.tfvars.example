@@ -1,0 +1,66 @@
+# Example Terraform variables for Staging environment
+# Copy this file to terraform.tfvars and fill in your values
+
+environment = "stg"
+namespace   = "my-tiny-app-stg"
+name_prefix = "stg-"
+
+# Image configuration
+docker_registry  = "localhost"
+image_tag        = "stg-latest"
+image_pull_policy = "Never"
+
+# Replicas
+app_replicas      = 2
+consumer_replicas = 2
+ui_replicas       = 2
+
+# Resource limits (staging - larger)
+app_resources = {
+  requests = {
+    memory = "256Mi"
+    cpu    = "200m"
+  }
+  limits = {
+    memory = "512Mi"
+    cpu    = "400m"
+  }
+}
+
+consumer_resources = {
+  requests = {
+    memory = "256Mi"
+    cpu    = "200m"
+  }
+  limits = {
+    memory = "512Mi"
+    cpu    = "400m"
+  }
+}
+
+ui_resources = {
+  requests = {
+    memory = "512Mi"
+    cpu    = "200m"
+  }
+  limits = {
+    memory = "1Gi"
+    cpu    = "400m"
+  }
+}
+
+# ConfigMap values
+config = {
+  NODE_ENV         = "staging"
+  MONGODB_URI      = "mongodb://stg-mongodb:27017/my-tiny-app-stg"
+  KAFKA_BROKER     = "stg-kafka:9093"
+  KAFKA_TOPIC      = "item-events-stg"
+  KAFKA_GROUP_ID   = "my-tiny-app-consumer-group-stg"
+  APP_API_URL      = "http://stg-my-tiny-app-service:3000"
+  API_URL          = "http://stg-my-tiny-app-service:3000"
+}
+
+# Kubernetes context
+kubeconfig_path = ""
+kube_context    = "minikube"
+

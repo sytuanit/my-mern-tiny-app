@@ -24,11 +24,13 @@ build: ## Build Docker images for apps
 	docker build -t my-tiny-app-consumer:latest ./my-tiny-app-consumer
 	@echo "✅ Images built!"
 
-deploy: ## Deploy apps to LocalStack EC2
-	@bash scripts/deploy-to-localstack.sh
+deploy: ## Deploy apps to LocalStack EC2 (use Terraform)
+	@echo "⚠️  Use Terraform to deploy:"
+	@echo "  cd terraform/localstack && terraform apply"
 
-destroy: ## Destroy LocalStack infrastructure
-	@bash scripts/destroy-localstack.sh
+destroy: ## Destroy LocalStack infrastructure (use Terraform)
+	@echo "⚠️  Use Terraform to destroy:"
+	@echo "  cd terraform/localstack && terraform destroy"
 
 clean: ## Clean up all data and containers
 	@echo "🧹 Cleaning up..."
