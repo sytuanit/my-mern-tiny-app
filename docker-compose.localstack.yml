@@ -1,6 +1,10 @@
 name: my-mern-tiny-app-localstack
 
 services:
+  # LocalStack - AWS Services Emulator
+  # Used by Terraform to provision EC2 instances
+  # All other services (MongoDB, Kafka, Zookeeper, App, Consumer, UI) 
+  # are deployed on EC2 instances via Terraform
   localstack:
     image: localstack/localstack:latest
     container_name: localstack
@@ -13,117 +17,13 @@ services:
       - DEBUG=1
       # Enable Pro features if you have LocalStack Pro
       # - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY:-}
-    # Temporarily disable volume mount to test (data will be lost on container restart)
+    # LocalStack data persistence (uncomment to persist data across restarts)
     # volumes:
     #   - "./localstack-data:/var/lib/localstack"
     networks:
-      - app-network
       - localstack-network
 
-  # Infrastructure services (still needed)
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    container_name: my-tiny-app-zookeeper
-    restart: unless-stopped
-    ports:
-      - "2181:2181"
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - app-network
-
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: my-tiny-app-kafka
-    restart: unless-stopped
-    ports:
-      - "9092:9092"
-      - "9093:9093"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-    depends_on:
-      - zookeeper
-    networks:
-      - app-network
-
-  mongodb:
-    image: mongo:7.0
-    container_name: my-tiny-app-mongodb
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    environment:
-      MONGO_INITDB_DATABASE: my-tiny-app
-    networks:
-      - app-network
-
-  # Applications will be deployed to LocalStack EC2 via Terraform
-  # These are kept as fallback or for local development
-  app:
-    build:
-      context: ./my-tiny-app
-      dockerfile: Dockerfile
-    container_name: my-tiny-app
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      PORT: 3000
-      MONGODB_URI: mongodb://mongodb:27017/my-tiny-app
-      KAFKA_BROKER: kafka:9093
-      KAFKA_TOPIC: item-events
-      NODE_ENV: production
-      AWS_REGION: us-east-1
-      AWS_ENDPOINT_URL: http://localstack:4566
-    depends_on:
-      - mongodb
-      - kafka
-      - localstack
-    networks:
-      - app-network
-
-  consumer:
-    build:
-      context: ./my-tiny-app-consumer
-      dockerfile: Dockerfile
-    container_name: my-tiny-app-consumer
-    restart: unless-stopped
-    ports:
-      - "3001:3001"
-    environment:
-      PORT: 3001
-      MONGODB_URI: mongodb://mongodb:27017/my-tiny-app
-      KAFKA_BROKER: kafka:9093
-      KAFKA_TOPIC: item-events
-      KAFKA_GROUP_ID: my-tiny-app-consumer-group
-      MY_TINY_APP_API_URL: http://app:3000
-      NODE_ENV: production
-      AWS_REGION: us-east-1
-      AWS_ENDPOINT_URL: http://localstack:4566
-    depends_on:
-      - mongodb
-      - kafka
-      - app
-      - localstack
-    networks:
-      - app-network
-
-volumes:
-  mongodb_data:
-  localstack_data:
-
 networks:
-  app-network:
-    driver: bridge
   localstack-network:
     driver: bridge
 

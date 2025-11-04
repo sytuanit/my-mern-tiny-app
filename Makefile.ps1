@@ -11,11 +11,11 @@ function Show-Help {
     Write-Host "Usage: .\Makefile.ps1 <command>" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Available commands:" -ForegroundColor Yellow
-    Write-Host "  localstack-up      Start LocalStack and infrastructure services" -ForegroundColor White
-    Write-Host "  localstack-down    Stop LocalStack and infrastructure services" -ForegroundColor White
+    Write-Host "  localstack-up      Start LocalStack (services deployed on EC2 via Terraform)" -ForegroundColor White
+    Write-Host "  localstack-down    Stop LocalStack" -ForegroundColor White
     Write-Host "  build              Build Docker images for apps" -ForegroundColor White
-    Write-Host "  deploy             Deploy apps to LocalStack EC2" -ForegroundColor White
-    Write-Host "  destroy            Destroy LocalStack infrastructure" -ForegroundColor White
+    Write-Host "  deploy             Deploy apps to LocalStack EC2 (use Terraform)" -ForegroundColor White
+    Write-Host "  destroy            Destroy LocalStack infrastructure (use Terraform)" -ForegroundColor White
     Write-Host "  clean              Clean up all data and containers" -ForegroundColor White
     Write-Host "  test-localstack    Test LocalStack connectivity" -ForegroundColor White
     Write-Host "  list-instances     List EC2 instances in LocalStack" -ForegroundColor White
@@ -24,17 +24,19 @@ function Show-Help {
 }
 
 function Start-LocalStack {
-    Write-Host "🚀 Starting LocalStack and infrastructure..." -ForegroundColor Cyan
-    docker-compose -f docker-compose.localstack.yml up -d localstack mongodb kafka zookeeper
-    Write-Host "⏳ Waiting for services to be ready..." -ForegroundColor Yellow
+    Write-Host "🚀 Starting LocalStack..." -ForegroundColor Cyan
+    docker-compose -f docker-compose.localstack.yml up -d localstack
+    Write-Host "⏳ Waiting for LocalStack to be ready..." -ForegroundColor Yellow
     Start-Sleep -Seconds 10
-    Write-Host "✅ Services started!" -ForegroundColor Green
+    Write-Host "✅ LocalStack started!" -ForegroundColor Green
+    Write-Host "💡 Use Terraform to provision EC2 instances with services:" -ForegroundColor Cyan
+    Write-Host "   cd terraform/localstack/environments/dev/infrastructure && terraform apply" -ForegroundColor Gray
 }
 
 function Stop-LocalStack {
-    Write-Host "🛑 Stopping LocalStack and infrastructure..." -ForegroundColor Cyan
+    Write-Host "🛑 Stopping LocalStack..." -ForegroundColor Cyan
     docker-compose -f docker-compose.localstack.yml down
-    Write-Host "✅ Services stopped!" -ForegroundColor Green
+    Write-Host "✅ LocalStack stopped!" -ForegroundColor Green
 }
 
 function Build-Images {
@@ -98,9 +100,9 @@ function Test-LocalStack {
     }
     
     try {
-        $result = aws --endpoint-url=http://localhost:4567 ec2 describe-instances 2>&1
+        $result = aws --endpoint-url=http://localhost:4567 --region us-east-1 ec2 describe-instances 2>&1
         if ($LASTEXITCODE -eq 0 -and $result) {
-            aws --endpoint-url=http://localhost:4567 ec2 describe-instances --output table
+            aws --endpoint-url=http://localhost:4567 --region us-east-1 ec2 describe-instances --output table
         } else {
             Write-Host "⚠️  AWS CLI not configured or no instances found" -ForegroundColor Yellow
         }
@@ -114,7 +116,7 @@ function List-Instances {
     try {
         # Escape single quotes properly for PowerShell
         $query = "Reservations[*].Instances[*].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0],PublicIpAddress]"
-        aws --endpoint-url=http://localhost:4567 ec2 describe-instances --query $query --output table
+        aws --endpoint-url=http://localhost:4567 --region us-east-1 ec2 describe-instances --query $query --output table
     } catch {
         Write-Host "⚠️  AWS CLI not configured or no instances found" -ForegroundColor Yellow
         Write-Host "   Make sure AWS CLI is installed and LocalStack is running" -ForegroundColor Yellow
