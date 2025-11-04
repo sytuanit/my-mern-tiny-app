@@ -143,6 +143,15 @@ APPS_EOF
 # Start application services
 docker-compose -f /opt/docker-compose-apps.yml up -d
 
-# Log deployment
+# Log deployment status
 echo "Deployment completed at $(date)" >> /var/log/my-tiny-app-deployment.log
+
+# List running containers for verification
+echo "=== Running Containers ===" >> /var/log/my-tiny-app-deployment.log
+docker ps >> /var/log/my-tiny-app-deployment.log 2>&1
+
+# Log container status
+echo "=== Container Status ===" >> /var/log/my-tiny-app-deployment.log
+docker-compose -f /opt/docker-compose-infra.yml ps >> /var/log/my-tiny-app-deployment.log 2>&1
+docker-compose -f /opt/docker-compose-apps.yml ps >> /var/log/my-tiny-app-deployment.log 2>&1
 
