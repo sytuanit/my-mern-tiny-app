@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Th&ocirc;ng tin AWS c&#x1ea7;n &dstrok;&#x1ec3; Deploy l&ecirc;n EC2</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="thông-tin-aws-cần-để-deploy-lên-ec2">Thông tin AWS cần để Deploy lên EC2</h1>
+<h2 id="-tóm-tắt-nhanh">🎯 TÓM TẮT NHANH</h2>
+<h3 id="cho-localstack-không-cần-gì-cả-"><strong>Cho LocalStack: KHÔNG CẦN gì cả! ✅</strong></h3>
+<ul>
+<li>LocalStack dùng <strong>dummy credentials</strong> đã config sẵn</li>
+<li>Không cần AWS account</li>
+<li>Không cần Access Key</li>
+</ul>
+<h3 id="cho-aws-thật-cần-các-thông-tin-sau-️"><strong>Cho AWS thật: CẦN các thông tin sau ⬇️</strong></h3>
+<hr>
+<h2 id="-chi-tiết">📋 CHI TIẾT</h2>
+<h3 id="1-localstack-ec2-hiện-tại---không-cần"><strong>1. LocalStack EC2 (Hiện tại - KHÔNG CẦN)</strong></h3>
+<p>✅ <strong>Đã có sẵn trong <code>terraform/localstack/main.tf</code>:</strong></p>
+<pre><code class="language-terraform">provider &quot;aws&quot; {
+  access_key = &quot;test&quot;              # ← Dummy
+  secret_key = &quot;test&quot;              # ← Dummy
+  region     = &quot;us-east-1&quot;         # ← Bất kỳ region nào
+  # ... đã skip tất cả validation
+}
+</code></pre>
+<p><strong>Kết luận:</strong> Bạn <strong>KHÔNG CẦN</strong> làm gì cả, chỉ cần chạy <code>.\deploy-all.ps1</code>!</p>
+<hr>
+<h3 id="2-aws-thật-ec2-cần-các-thông-tin-sau"><strong>2. AWS Thật EC2 (CẦN các thông tin sau)</strong></h3>
+<h4 id="a-aws-credentials-bắt-buộc"><strong>A. AWS Credentials (Bắt buộc)</strong></h4>
+<ol>
+<li>
+<p><strong>AWS Access Key ID</strong></p>
+<ul>
+<li>Format: <code>AKIAIOSFODNN7EXAMPLE</code></li>
+<li>Lấy từ: AWS Console → IAM → Users → Security credentials → Create access key</li>
+</ul>
+</li>
+<li>
+<p><strong>AWS Secret Access Key</strong></p>
+<ul>
+<li>Format: <code>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</code></li>
+<li>⚠️ <strong>CHỈ HIỂN THỊ 1 LẦN</strong> khi tạo, phải lưu lại ngay!</li>
+</ul>
+</li>
+<li>
+<p><strong>AWS Region</strong></p>
+<ul>
+<li>Ví dụ: <code>us-east-1</code>, <code>ap-southeast-1</code>, <code>eu-west-1</code></li>
+<li>Xem danh sách: <a href="https://docs.aws.amazon.com/general/latest/gr/rande.html">https://docs.aws.amazon.com/general/latest/gr/rande.html</a></li>
+</ul>
+</li>
+</ol>
+<h4 id="b-aws-account-information"><strong>B. AWS Account Information</strong></h4>
+<ol>
+<li>
+<p><strong>AWS Account ID</strong> (12 chữ số)</p>
+<ul>
+<li>Format: <code>123456789012</code></li>
+<li>Tìm ở: AWS Console → Support → Account</li>
+</ul>
+</li>
+<li>
+<p><strong>Default VPC ID</strong> (nếu muốn dùng VPC có sẵn)</p>
+<ul>
+<li>Format: <code>vpc-12345678</code></li>
+<li>Hoặc để Terraform tự tạo VPC mới</li>
+</ul>
+</li>
+</ol>
+<h4 id="c-ec2-specific-information"><strong>C. EC2 Specific Information</strong></h4>
+<ol>
+<li>
+<p><strong>AMI ID</strong> (Amazon Machine Image)</p>
+<ul>
+<li>Format: <code>ami-0c55b159cbfafe1f0</code></li>
+<li>Ví dụ cho Ubuntu: <code>ami-0c55b159cbfafe1f0</code> (us-east-1)</li>
+<li>Tìm tại: EC2 Console → AMIs → Search</li>
+</ul>
+</li>
+<li>
+<p><strong>Key Pair Name</strong> (cho SSH access)</p>
+<ul>
+<li>Format: <code>my-key-pair</code></li>
+<li>Tạo tại: EC2 Console → Key Pairs → Create key pair</li>
+<li>⚠️ Phải download <code>.pem</code> file và giữ an toàn!</li>
+</ul>
+</li>
+<li>
+<p><strong>Security Group</strong> (hoặc để Terraform tạo mới)</p>
+<ul>
+<li>Cho phép ports: 3000, 3001 (app ports), 22 (SSH)</li>
+<li>Source: 0.0.0.0/0 (public) hoặc IP cụ thể</li>
+</ul>
+</li>
+<li>
+<p><strong>Instance Type</strong></p>
+<ul>
+<li>Ví dụ: <code>t3.micro</code> (free tier), <code>t3.small</code>, <code>t3.medium</code></li>
+<li>Xem pricing: <a href="https://aws.amazon.com/ec2/pricing/">https://aws.amazon.com/ec2/pricing/</a></li>
+</ul>
+</li>
+</ol>
+<h4 id="d-network-configuration"><strong>D. Network Configuration</strong></h4>
+<ol>
+<li>
+<p><strong>Subnet ID</strong> (nếu muốn chỉ định)</p>
+<ul>
+<li>Format: <code>subnet-12345678</code></li>
+<li>Hoặc để Terraform tự tạo</li>
+</ul>
+</li>
+<li>
+<p><strong>VPC ID</strong> (nếu muốn chỉ định)</p>
+<ul>
+<li>Format: <code>vpc-12345678</code></li>
+<li>Hoặc để Terraform tự tạo</li>
+</ul>
+</li>
+</ol>
+<h4 id="e-docker-registry-nếu-dùng-ecr"><strong>E. Docker Registry (Nếu dùng ECR)</strong></h4>
+<ol>
+<li>
+<p><strong>ECR Repository URL</strong></p>
+<ul>
+<li>Format: <code>123456789012.dkr.ecr.us-east-1.amazonaws.com/my-tiny-app</code></li>
+<li>Hoặc dùng Docker Hub: <code>your-username/my-tiny-app</code></li>
+</ul>
+</li>
+<li>
+<p><strong>ECR Login Token</strong> (nếu private)</p>
+<ul>
+<li>Chạy: <code>aws ecr get-login-password --region us-east-1 | docker login ...</code></li>
+</ul>
+</li>
+</ol>
+<h4 id="f-managed-services-nếu-dùng"><strong>F. Managed Services (Nếu dùng)</strong></h4>
+<ol>
+<li>
+<p><strong>RDS Endpoint</strong> (nếu dùng Amazon RDS cho MongoDB)</p>
+<ul>
+<li>Format: <code>mydb.123456789012.us-east-1.rds.amazonaws.com:27017</code></li>
+</ul>
+</li>
+<li>
+<p><strong>MSK Bootstrap Brokers</strong> (nếu dùng Amazon MSK cho Kafka)</p>
+<ul>
+<li>Format: <code>broker1.abc123.c2.kafka.us-east-1.amazonaws.com:9092</code></li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="-cách-setup-cho-aws-thật">🔧 Cách Setup cho AWS Thật</h2>
+<h3 id="bước-1-tạo-iam-user-với-permissions"><strong>Bước 1: Tạo IAM User với Permissions</strong></h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Permissions cần:</span>
+- EC2FullAccess (hoặc các permissions cụ thể)
+- VPCFullAccess (nếu tạo VPC mới)
+- IAMReadOnlyAccess (cho một số operations)
+</code></pre>
+<h3 id="bước-2-tạo-access-keys"><strong>Bước 2: Tạo Access Keys</strong></h3>
+<ol>
+<li>AWS Console → IAM → Users → Create user</li>
+<li>Attach policies: <code>AmazonEC2FullAccess</code>, <code>AmazonVPCFullAccess</code></li>
+<li>Security credentials → Create access key</li>
+<li>Download hoặc copy <strong>Access Key ID</strong> và <strong>Secret Access Key</strong></li>
+</ol>
+<h3 id="bước-3-configure-aws-cli-optional-nhưng-recommended"><strong>Bước 3: Configure AWS CLI (Optional nhưng recommended)</strong></h3>
+<pre><code class="language-powershell">aws configure
+<span class="hljs-comment"># AWS Access Key ID: [paste your key]</span>
+<span class="hljs-comment"># AWS Secret Access Key: [paste your secret]</span>
+<span class="hljs-comment"># Default region: us-east-1</span>
+<span class="hljs-comment"># Default output format: json</span>
+</code></pre>
+<h3 id="bước-4-cập-nhật-terraform"><strong>Bước 4: Cập nhật Terraform</strong></h3>
+<p>Tạo file mới: <code>terraform/aws/main.tf</code> (thay vì <code>terraform/localstack/main.tf</code>)</p>
+<pre><code class="language-terraform">provider &quot;aws&quot; {
+  region     = var.aws_region
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
+}
+
+# Không dùng endpoints nữa (vì là AWS thật)
+# Không skip validation
+</code></pre>
+<h3 id="bước-5-cập-nhật-variables"><strong>Bước 5: Cập nhật Variables</strong></h3>
+<pre><code class="language-terraform"># terraform/aws/variables.tf
+variable &quot;aws_region&quot; {
+  default = &quot;us-east-1&quot;
+}
+
+variable &quot;aws_access_key&quot; {
+  sensitive = true
+}
+
+variable &quot;aws_secret_key&quot; {
+  sensitive = true
+}
+
+variable &quot;ami_id&quot; {
+  default = &quot;ami-0c55b159cbfafe1f0&quot;  # Ubuntu 22.04 LTS us-east-1
+}
+
+variable &quot;key_pair_name&quot; {
+  default = &quot;my-key-pair&quot;
+}
+</code></pre>
+<h3 id="bước-6-chạy-terraform"><strong>Bước 6: Chạy Terraform</strong></h3>
+<pre><code class="language-powershell"><span class="hljs-built_in">Set-Location</span> terraform/aws
+terraform init
+terraform plan \
+  <span class="hljs-literal">-var</span>=<span class="hljs-string">&quot;aws_access_key=YOUR_ACCESS_KEY&quot;</span> \
+  <span class="hljs-literal">-var</span>=<span class="hljs-string">&quot;aws_secret_key=YOUR_SECRET_KEY&quot;</span> \
+  <span class="hljs-literal">-var</span>=<span class="hljs-string">&quot;aws_region=us-east-1&quot;</span>
+
+terraform apply
+</code></pre>
+<hr>
+<h2 id="-so-sánh-localstack-vs-aws-thật">📊 So sánh LocalStack vs AWS Thật</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>LocalStack</th>
+<th>AWS Thật</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Access Key</strong></td>
+<td><code>test</code> (dummy)</td>
+<td>Real AWS Access Key</td>
+</tr>
+<tr>
+<td><strong>Secret Key</strong></td>
+<td><code>test</code> (dummy)</td>
+<td>Real AWS Secret Key</td>
+</tr>
+<tr>
+<td><strong>Region</strong></td>
+<td>Bất kỳ</td>
+<td>Phải là region thật</td>
+</tr>
+<tr>
+<td><strong>AMI ID</strong></td>
+<td><code>ami-12345678</code> (dummy)</td>
+<td>Real AMI ID</td>
+</tr>
+<tr>
+<td><strong>Account ID</strong></td>
+<td>Không cần</td>
+<td>Cần 12 chữ số</td>
+</tr>
+<tr>
+<td><strong>Key Pair</strong></td>
+<td>Không cần</td>
+<td>Cần tạo</td>
+</tr>
+<tr>
+<td><strong>VPC/Subnet</strong></td>
+<td>Terraform tạo</td>
+<td>Có thể dùng có sẵn</td>
+</tr>
+<tr>
+<td><strong>Cost</strong></td>
+<td>Free</td>
+<td>Có phí (~$0.01/hour cho t3.micro)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="-checklist-cho-aws-thật">✅ Checklist cho AWS Thật</h2>
+<ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> AWS Account đã được tạo và verified</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> IAM User đã được tạo với EC2 permissions</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Access Key ID và Secret Access Key đã được tạo và lưu</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Key Pair đã được tạo và download <code>.pem</code> file</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> AMI ID đã được chọn (ví dụ: Ubuntu 22.04)</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Region đã được chọn (ví dụ: us-east-1)</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> AWS CLI đã được configure (optional)</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Terraform đã được cập nhật với real credentials</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Hiểu về AWS costs (EC2 instances có phí)</li>
+</ul>
+<hr>
+<h2 id="-security-best-practices">🚨 Security Best Practices</h2>
+<h3 id="cho-localstack"><strong>Cho LocalStack:</strong></h3>
+<ul>
+<li>✅ Không cần lo lắng (dummy credentials)</li>
+</ul>
+<h3 id="cho-aws-thật"><strong>Cho AWS Thật:</strong></h3>
+<ul>
+<li>⚠️ <strong>KHÔNG</strong> commit Access Keys vào Git</li>
+<li>✅ Dùng environment variables hoặc AWS Secrets Manager</li>
+<li>✅ Dùng IAM roles thay vì hardcode credentials</li>
+<li>✅ Rotate keys định kỳ</li>
+<li>✅ Dùng least privilege (chỉ cấp permissions cần thiết)</li>
+<li>✅ Enable MFA cho IAM users</li>
+</ul>
+<p><strong>Ví dụ an toàn:</strong></p>
+<pre><code class="language-powershell"><span class="hljs-comment"># Dùng environment variables</span>
+<span class="hljs-variable">$env:AWS_ACCESS_KEY_ID</span> = <span class="hljs-string">&quot;YOUR_KEY&quot;</span>
+<span class="hljs-variable">$env:AWS_SECRET_ACCESS_KEY</span> = <span class="hljs-string">&quot;YOUR_SECRET&quot;</span>
+terraform apply  <span class="hljs-comment"># Terraform tự động đọc env vars</span>
+</code></pre>
+<p>Hoặc dùng AWS credential files:</p>
+<pre><code class="language-powershell"><span class="hljs-comment"># ~/.aws/credentials</span>
+[<span class="hljs-type">default</span>]
+aws_access_key_id = YOUR_KEY
+aws_secret_access_key = YOUR_SECRET
+</code></pre>
+<hr>
+<h2 id="-tóm-tắt-cho-bạn">📝 TÓM TẮT CHO BẠN</h2>
+<h3 id="câu-hỏi-cần-thông-tin-gì-của-aws-để-deploy-lên-ec2-success"><strong>Câu hỏi: Cần thông tin gì của AWS để deploy lên EC2 success?</strong></h3>
+<h3 id="trả-lời"><strong>Trả lời:</strong></h3>
+<p><strong>Cho LocalStack (hiện tại):</strong></p>
+<ul>
+<li>✅ <strong>KHÔNG CẦN GÌ CẢ</strong> - đã config sẵn!</li>
+<li>Chỉ cần chạy: <code>.\deploy-all.ps1</code></li>
+</ul>
+<p><strong>Cho AWS thật:</strong></p>
+<ol>
+<li>✅ AWS Access Key ID</li>
+<li>✅ AWS Secret Access Key</li>
+<li>✅ AWS Region</li>
+<li>✅ AMI ID (ví dụ: Ubuntu AMI)</li>
+<li>✅ Key Pair Name (cho SSH)</li>
+<li>⚠️ Hiểu về costs (EC2 instances có phí)</li>
+</ol>
+<p><strong>Khuyến nghị:</strong></p>
+<ul>
+<li>Để test EC2: Dùng <strong>LocalStack</strong> (không cần gì)</li>
+<li>Để deploy production: Dùng <strong>AWS thật</strong> (cần credentials ở trên)</li>
+</ul>
+
+            <script async src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+            
+        </body>
+        </html>

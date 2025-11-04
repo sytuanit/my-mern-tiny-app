@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: my-tiny-app-stg
+
+resources:
+  - ../../base
+
+namePrefix: stg-
+
+commonLabels:
+  environment: staging
+
+patchesStrategicMerge:
+  - configmap-patch.yaml
+  - namespace-patch.yaml
+  - resources-patch.yaml
+
+images:
+  - name: my-tiny-app
+    newTag: stg-latest
+  - name: my-tiny-app-consumer
+    newTag: stg-latest
+  - name: my-tiny-app-ui
+    newTag: stg-latest
+
+replicas:
+  - name: my-tiny-app
+    count: 2
+  - name: my-tiny-app-consumer
+    count: 2
+  - name: my-tiny-app-ui
+    count: 2
+

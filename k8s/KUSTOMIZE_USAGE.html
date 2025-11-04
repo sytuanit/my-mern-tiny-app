@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>&#x1f680; Kustomize Multi-Environment Guide</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="-kustomize-multi-environment-guide">🚀 Kustomize Multi-Environment Guide</h1>
+<h2 id="-cấu-trúc">📁 Cấu trúc</h2>
+<pre><code>k8s/
+├── base/                    # Base config (shared)
+│   ├── kustomization.yaml
+│   ├── namespace.yaml
+│   ├── configmap.yaml
+│   ├── ingress.yaml
+│   └── [services]/
+│
+└── overlays/
+    ├── dev/                 # Development
+    │   ├── kustomization.yaml
+    │   ├── configmap-patch.yaml
+    │   ├── namespace-patch.yaml
+    │   └── resources-patch.yaml
+    │
+    └── stg/                 # Staging
+        ├── kustomization.yaml
+        ├── configmap-patch.yaml
+        ├── namespace-patch.yaml
+        └── resources-patch.yaml
+</code></pre>
+<hr>
+<h2 id="-cách-sử-dụng">🎯 Cách sử dụng</h2>
+<h3 id="1-preview-không-apply">1. Preview (không apply)</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Xem config sẽ được apply cho dev</span>
+kubectl kustomize k8s/overlays/dev
+
+<span class="hljs-comment"># Xem config sẽ được apply cho staging</span>
+kubectl kustomize k8s/overlays/stg
+</code></pre>
+<h3 id="2-deploy">2. Deploy</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Deploy to dev</span>
+kubectl apply -k k8s/overlays/dev
+
+<span class="hljs-comment"># Deploy to staging</span>
+kubectl apply -k k8s/overlays/stg
+</code></pre>
+<h3 id="3-xem-resources-đã-deploy">3. Xem resources đã deploy</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Dev</span>
+kubectl get all -n my-tiny-app-dev
+
+<span class="hljs-comment"># Staging</span>
+kubectl get all -n my-tiny-app-stg
+</code></pre>
+<h3 id="4-xóa">4. Xóa</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Delete dev</span>
+kubectl delete -k k8s/overlays/dev
+
+<span class="hljs-comment"># Delete staging</span>
+kubectl delete -k k8s/overlays/stg
+</code></pre>
+<hr>
+<h2 id="-sự-khác-biệt-giữa-dev-và-staging">🔍 Sự khác biệt giữa Dev và Staging</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Dev</th>
+<th>Staging</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Namespace</strong></td>
+<td><code>my-tiny-app-dev</code></td>
+<td><code>my-tiny-app-stg</code></td>
+</tr>
+<tr>
+<td><strong>Name Prefix</strong></td>
+<td><code>dev-</code></td>
+<td><code>stg-</code></td>
+</tr>
+<tr>
+<td><strong>Replicas</strong></td>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr>
+<td><strong>App Resources</strong></td>
+<td>64-128Mi, 50-100m</td>
+<td>256-512Mi, 200-400m</td>
+</tr>
+<tr>
+<td><strong>UI Resources</strong></td>
+<td>128-256Mi, 50-100m</td>
+<td>512Mi-1Gi, 200-400m</td>
+</tr>
+<tr>
+<td><strong>NODE_ENV</strong></td>
+<td><code>development</code></td>
+<td><code>staging</code></td>
+</tr>
+<tr>
+<td><strong>Image Tags</strong></td>
+<td><code>dev-latest</code></td>
+<td><code>stg-latest</code></td>
+</tr>
+<tr>
+<td><strong>Kafka Topic</strong></td>
+<td><code>item-events-dev</code></td>
+<td><code>item-events-stg</code></td>
+</tr>
+<tr>
+<td><strong>MongoDB DB</strong></td>
+<td><code>my-tiny-app-dev</code></td>
+<td><code>my-tiny-app-stg</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="-ví-dụ-deploy-dev">📝 Ví dụ: Deploy Dev</h2>
+<pre><code class="language-bash"><span class="hljs-comment"># 1. Preview</span>
+kubectl kustomize k8s/overlays/dev | <span class="hljs-built_in">head</span> -50
+
+<span class="hljs-comment"># 2. Apply</span>
+kubectl apply -k k8s/overlays/dev
+
+<span class="hljs-comment"># 3. Check status</span>
+kubectl get pods -n my-tiny-app-dev
+kubectl get services -n my-tiny-app-dev
+
+<span class="hljs-comment"># 4. Check logs</span>
+kubectl logs -n my-tiny-app-dev deployment/dev-my-tiny-app
+</code></pre>
+<hr>
+<h2 id="-customize-cho-từng-env">🔧 Customize cho từng env</h2>
+<h3 id="thay-đổi-replicas">Thay đổi replicas</h3>
+<p>Sửa trong <code>kustomization.yaml</code>:</p>
+<pre><code class="language-yaml"><span class="hljs-attr">replicas:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">my-tiny-app</span>
+    <span class="hljs-attr">count:</span> <span class="hljs-number">3</span>  <span class="hljs-comment"># Thay đổi số replicas</span>
+</code></pre>
+<h3 id="thay-đổi-resources">Thay đổi resources</h3>
+<p>Sửa trong <code>resources-patch.yaml</code>:</p>
+<pre><code class="language-yaml"><span class="hljs-attr">resources:</span>
+  <span class="hljs-attr">requests:</span>
+    <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;512Mi&quot;</span>
+    <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;500m&quot;</span>
+  <span class="hljs-attr">limits:</span>
+    <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;1Gi&quot;</span>
+    <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;1000m&quot;</span>
+</code></pre>
+<h3 id="thay-đổi-config">Thay đổi config</h3>
+<p>Sửa trong <code>configmap-patch.yaml</code>:</p>
+<pre><code class="language-yaml"><span class="hljs-attr">data:</span>
+  <span class="hljs-attr">NODE_ENV:</span> <span class="hljs-string">&quot;production&quot;</span>
+  <span class="hljs-attr">MONGODB_URI:</span> <span class="hljs-string">&quot;mongodb://prod-mongodb:27017/my-tiny-app-prod&quot;</span>
+</code></pre>
+<hr>
+<h2 id="-thêm-environment-mới-ví-dụ-prod">🎨 Thêm environment mới (ví dụ: prod)</h2>
+<pre><code class="language-bash"><span class="hljs-comment"># 1. Tạo thư mục</span>
+<span class="hljs-built_in">mkdir</span> -p k8s/overlays/prod
+
+<span class="hljs-comment"># 2. Copy từ stg</span>
+<span class="hljs-built_in">cp</span> k8s/overlays/stg/* k8s/overlays/prod/
+
+<span class="hljs-comment"># 3. Sửa các file trong prod/</span>
+<span class="hljs-comment"># - kustomization.yaml: Đổi namespace, namePrefix</span>
+<span class="hljs-comment"># - namespace-patch.yaml: Đổi namespace name</span>
+<span class="hljs-comment"># - configmap-patch.yaml: Đổi config values</span>
+<span class="hljs-comment"># - resources-patch.yaml: Điều chỉnh resources</span>
+</code></pre>
+<hr>
+<h2 id="-tips">💡 Tips</h2>
+<ol>
+<li><strong>Luôn preview trước</strong>: Dùng <code>kubectl kustomize</code> để xem config trước khi apply</li>
+<li><strong>Test với dev</strong>: Test changes trên dev trước khi deploy staging</li>
+<li><strong>Version control</strong>: Commit cả base và overlays vào Git</li>
+<li><strong>Base changes</strong>: Sửa base sẽ ảnh hưởng tất cả env, cẩn thận!</li>
+<li><strong>Overlay changes</strong>: Chỉ ảnh hưởng env đó</li>
+</ol>
+<hr>
+<h2 id="-troubleshooting">🐛 Troubleshooting</h2>
+<h3 id="lỗi-resource-not-found">Lỗi: &quot;resource not found&quot;</h3>
+<ul>
+<li>Kiểm tra đường dẫn trong <code>kustomization.yaml</code></li>
+<li>Đảm bảo file tồn tại trong <code>base/</code></li>
+</ul>
+<h3 id="lỗi-namespace-not-found">Lỗi: &quot;namespace not found&quot;</h3>
+<ul>
+<li>Kiểm tra namespace trong overlay patch</li>
+<li>Đảm bảo namespace được tạo trước</li>
+</ul>
+<h3 id="preview-không-đúng">Preview không đúng</h3>
+<ul>
+<li>Chạy <code>kubectl kustomize</code> từ thư mục overlay</li>
+<li>Hoặc chỉ định đường dẫn đầy đủ</li>
+</ul>
+
+            
+            
+        </body>
+        </html>

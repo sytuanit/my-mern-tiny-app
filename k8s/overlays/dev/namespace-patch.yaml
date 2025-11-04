@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-tiny-app-dev
+  labels:
+    name: my-tiny-app-dev
+    environment: dev
+

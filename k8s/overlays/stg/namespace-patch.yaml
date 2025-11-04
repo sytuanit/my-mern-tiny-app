@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-tiny-app-stg
+  labels:
+    name: my-tiny-app-stg
+    environment: staging
+
