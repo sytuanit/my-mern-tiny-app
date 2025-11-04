@@ -32,51 +32,60 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Check LocalStack health
+        shell: pwsh
         run: |
-          echo "Checking LocalStack health..."
-          curl -f http://localhost:4567/_localstack/health || exit 1
-          echo "✅ LocalStack is running"
+          Write-Host "Checking LocalStack health..."
+          $response = Invoke-WebRequest -Uri "http://localhost:4567/_localstack/health" -UseBasicParsing -ErrorAction Stop
+          if ($response.StatusCode -eq 200) {
+            Write-Host "✅ LocalStack is running"
+          } else {
+            Write-Host "❌ LocalStack health check failed"
+            exit 1
+          }
 
       - name: Generate image tags
         id: image-tags
+        shell: pwsh
         run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          IMAGE_TAG="${ENVIRONMENT}-${SHORT_SHA}-${TIMESTAMP}"
+          $SHORT_SHA = git rev-parse --short HEAD
+          $TIMESTAMP = Get-Date -Format "yyyyMMdd-HHmmss"
+          $IMAGE_TAG = "${ENVIRONMENT}-${SHORT_SHA}-${TIMESTAMP}"
           
-          echo "app_image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          echo "consumer_image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          echo "ui_image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          # Set GitHub outputs
+          "app_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "consumer_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "ui_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "short_sha=${SHORT_SHA}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           
-          echo "Generated image tags:"
-          echo "  App: ${IMAGE_TAG}"
-          echo "  Consumer: ${IMAGE_TAG}"
-          echo "  UI: ${IMAGE_TAG}"
+          Write-Host "Generated image tags:"
+          Write-Host "  App: ${IMAGE_TAG}"
+          Write-Host "  Consumer: ${IMAGE_TAG}"
+          Write-Host "  UI: ${IMAGE_TAG}"
 
       - name: Build Docker images
+        shell: pwsh
         run: |
-          echo "Building Docker images..."
+          Write-Host "Building Docker images..."
           
           # Build app
-          echo "Building my-tiny-app..."
+          Write-Host "Building my-tiny-app..."
           docker build -t localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }} ./my-tiny-app
           docker tag localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }} localhost/my-tiny-app:${ENVIRONMENT}-latest
           
           # Build consumer
-          echo "Building my-tiny-app-consumer..."
+          Write-Host "Building my-tiny-app-consumer..."
           docker build -t localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }} ./my-tiny-app-consumer
           docker tag localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }} localhost/my-tiny-app-consumer:${ENVIRONMENT}-latest
           
           # Build UI
-          echo "Building my-tiny-app-ui..."
+          Write-Host "Building my-tiny-app-ui..."
           docker build -t localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }} ./my-tiny-app-ui
           docker tag localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }} localhost/my-tiny-app-ui:${ENVIRONMENT}-latest
           
-          echo "✅ All images built successfully"
+          Write-Host "✅ All images built successfully"
           
           # List images
-          docker images | grep "localhost/my-tiny-app"
+          docker images | Select-String "localhost/my-tiny-app"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -124,30 +133,34 @@ jobs:
           terraform output
 
       - name: Verify deployment
+        shell: pwsh
         run: |
-          echo "Verifying deployment..."
-          sleep 10
+          Write-Host "Verifying deployment..."
+          Start-Sleep -Seconds 10
           
           # Check EC2 instances
-          aws --endpoint-url=${{ env.LOCALSTACK_ENDPOINT }} ec2 describe-instances \
-            --region ${{ env.AWS_REGION }} \
-            --filters "Name=tag:Name,Values=dev-my-tiny-app-server" \
-            --query "Reservations[*].Instances[*].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0]]" \
+          aws --endpoint-url=${{ env.LOCALSTACK_ENDPOINT }} ec2 describe-instances `
+            --region ${{ env.AWS_REGION }} `
+            --filters "Name=tag:Name,Values=dev-my-tiny-app-server" `
+            --query "Reservations[*].Instances[*].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0]]" `
             --output table
           
-          echo "✅ Deployment verification completed"
+          Write-Host "✅ Deployment verification completed"
 
       - name: Deployment summary
         if: always()
+        shell: pwsh
         run: |
-          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ steps.image-tags.outputs.short_sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Image Tag:** ${{ steps.image-tags.outputs.app_image_tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Deployed Images:" >> $GITHUB_STEP_SUMMARY
-          echo "- App: \`localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Consumer: \`localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- UI: \`localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          @"
+          ## Deployment Summary
+
+          **Environment:** ${{ env.ENVIRONMENT }}
+          **Commit:** ${{ steps.image-tags.outputs.short_sha }}
+          **Image Tag:** ${{ steps.image-tags.outputs.app_image_tag }}
+
+          ### Deployed Images:
+          - App: ``localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }}``
+          - Consumer: ``localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }}``
+          - UI: ``localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }}``
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
 
