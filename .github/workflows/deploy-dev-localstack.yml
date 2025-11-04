@@ -52,43 +52,87 @@ jobs:
         id: image-tags
         shell: powershell
         run: |
-          $SHORT_SHA = git rev-parse --short HEAD
+          $SHORT_SHA = (git rev-parse --short HEAD).Trim()
           $TIMESTAMP = Get-Date -Format "yyyyMMdd-HHmmss"
-          $IMAGE_TAG = "${ENVIRONMENT}-${SHORT_SHA}-${TIMESTAMP}"
+          $ENV_NAME = "${{ env.ENVIRONMENT }}"
           
-          # Set GitHub outputs
-          "app_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "consumer_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "ui_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "short_sha=${SHORT_SHA}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          # Validate inputs
+          if ([string]::IsNullOrWhiteSpace($ENV_NAME)) {
+            Write-Host "❌ Error: ENVIRONMENT variable is empty"
+            exit 1
+          }
+          
+          if ([string]::IsNullOrWhiteSpace($SHORT_SHA)) {
+            Write-Host "❌ Error: Could not get git short SHA"
+            exit 1
+          }
+          
+          # Construct image tag (ensure no leading/trailing dashes)
+          $IMAGE_TAG = "$ENV_NAME-$SHORT_SHA-$TIMESTAMP"
+          $IMAGE_TAG = $IMAGE_TAG.Trim('-')
+          
+          # Validate tag format (Docker tags cannot start with -)
+          if ($IMAGE_TAG.StartsWith('-') -or [string]::IsNullOrWhiteSpace($IMAGE_TAG)) {
+            Write-Host "❌ Error: Invalid image tag format: '$IMAGE_TAG'"
+            exit 1
+          }
           
           Write-Host "Generated image tags:"
-          Write-Host "  App: ${IMAGE_TAG}"
-          Write-Host "  Consumer: ${IMAGE_TAG}"
-          Write-Host "  UI: ${IMAGE_TAG}"
+          Write-Host "  Environment: $ENV_NAME"
+          Write-Host "  Short SHA: $SHORT_SHA"
+          Write-Host "  Timestamp: $TIMESTAMP"
+          Write-Host "  Image Tag: $IMAGE_TAG"
+          
+          # Set GitHub outputs (format: key=value)
+          "app_image_tag=$IMAGE_TAG" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "consumer_image_tag=$IMAGE_TAG" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "ui_image_tag=$IMAGE_TAG" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "short_sha=$SHORT_SHA" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          
+          # Verify outputs were written
+          Write-Host "Verifying outputs file..."
+          Get-Content $env:GITHUB_OUTPUT | Write-Host
 
       - name: Build Docker images
         shell: powershell
         run: |
           Write-Host "Building Docker images..."
           
+          $ENV_NAME = "${{ env.ENVIRONMENT }}"
+          
+          # Get image tags from previous step
+          $APP_TAG = "${{ steps.image-tags.outputs.app_image_tag }}"
+          $CONSUMER_TAG = "${{ steps.image-tags.outputs.consumer_image_tag }}"
+          $UI_TAG = "${{ steps.image-tags.outputs.ui_image_tag }}"
+          
+          Write-Host "Image tags to use:"
+          Write-Host "  App: $APP_TAG"
+          Write-Host "  Consumer: $CONSUMER_TAG"
+          Write-Host "  UI: $UI_TAG"
+          
+          # Validate tags are not empty
+          if ([string]::IsNullOrWhiteSpace($APP_TAG) -or $APP_TAG.StartsWith('-')) {
+            Write-Host "❌ Error: Invalid app_image_tag: '$APP_TAG'"
+            exit 1
+          }
+          
           # Build app
           Write-Host "Building my-tiny-app..."
-          docker build -t localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }} ./my-tiny-app
+          docker build -t "localhost/my-tiny-app:$APP_TAG" ./my-tiny-app
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          docker tag localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }} localhost/my-tiny-app:${ENVIRONMENT}-latest
+          docker tag "localhost/my-tiny-app:$APP_TAG" "localhost/my-tiny-app:${ENV_NAME}-latest"
           
           # Build consumer
           Write-Host "Building my-tiny-app-consumer..."
-          docker build -t localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }} ./my-tiny-app-consumer
+          docker build -t "localhost/my-tiny-app-consumer:$CONSUMER_TAG" ./my-tiny-app-consumer
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          docker tag localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }} localhost/my-tiny-app-consumer:${ENVIRONMENT}-latest
+          docker tag "localhost/my-tiny-app-consumer:$CONSUMER_TAG" "localhost/my-tiny-app-consumer:${ENV_NAME}-latest"
           
           # Build UI
           Write-Host "Building my-tiny-app-ui..."
-          docker build -t localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }} ./my-tiny-app-ui
+          docker build -t "localhost/my-tiny-app-ui:$UI_TAG" ./my-tiny-app-ui
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          docker tag localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }} localhost/my-tiny-app-ui:${ENVIRONMENT}-latest
+          docker tag "localhost/my-tiny-app-ui:$UI_TAG" "localhost/my-tiny-app-ui:${ENV_NAME}-latest"
           
           Write-Host "✅ All images built successfully"
           
