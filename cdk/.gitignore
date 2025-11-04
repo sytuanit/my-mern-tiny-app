@@ -1,0 +1,15 @@
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Compiled JavaScript files
+*.js
+*.js.map
+
+# TypeScript cache
+*.tsbuildinfo
+
+# CDK construct tree
+*.generated.ts
+node_modules/
+

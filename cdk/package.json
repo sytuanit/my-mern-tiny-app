@@ -1,0 +1,33 @@
+{
+  "name": "my-tiny-app-cdk",
+  "version": "1.0.0",
+  "description": "AWS CDK infrastructure for my-tiny-app on LocalStack",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "deploy:infra": "cdk deploy InfrastructureStack --app 'npx ts-node infra/app.ts'",
+    "deploy:services": "cdk deploy ServicesStack --app 'npx ts-node infra/app.ts'",
+    "destroy": "cdk destroy --all --app 'npx ts-node infra/app.ts'"
+  },
+  "keywords": [
+    "aws-cdk",
+    "localstack",
+    "ec2"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-cdk-lib": "^2.100.0",
+    "constructs": "^10.3.0",
+    "source-map-support": "^0.5.21"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2",
+    "aws-cdk": "^2.100.0"
+  }
+}
+

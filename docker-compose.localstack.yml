@@ -13,7 +13,7 @@ services:
       - "4567:4566"  # LocalStack Edge port (changed to 4567 to avoid conflict)
       - "4510-4559:4510-4559"  # External services port range
     environment:
-      - SERVICES=ec2,s3,iam,sts,ssm
+      - SERVICES=ec2,s3,iam,sts,ssm,cloudformation
       - DEBUG=1
       # Enable Pro features if you have LocalStack Pro
       # - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY:-}
