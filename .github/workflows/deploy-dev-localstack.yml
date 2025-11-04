@@ -32,30 +32,35 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Check LocalStack health
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "Checking LocalStack health..."
-          $response = Invoke-WebRequest -Uri "http://localhost:4567/_localstack/health" -UseBasicParsing -ErrorAction Stop
-          if ($response.StatusCode -eq 200) {
-            Write-Host "✅ LocalStack is running"
-          } else {
-            Write-Host "❌ LocalStack health check failed"
+          try {
+            $response = Invoke-WebRequest -Uri "http://localhost:4567/_localstack/health" -UseBasicParsing -ErrorAction Stop
+            if ($response.StatusCode -eq 200) {
+              Write-Host "✅ LocalStack is running"
+            } else {
+              Write-Host "❌ LocalStack health check failed with status: $($response.StatusCode)"
+              exit 1
+            }
+          } catch {
+            Write-Host "❌ LocalStack is not accessible: $_"
             exit 1
           }
 
       - name: Generate image tags
         id: image-tags
-        shell: pwsh
+        shell: powershell
         run: |
           $SHORT_SHA = git rev-parse --short HEAD
           $TIMESTAMP = Get-Date -Format "yyyyMMdd-HHmmss"
           $IMAGE_TAG = "${ENVIRONMENT}-${SHORT_SHA}-${TIMESTAMP}"
           
           # Set GitHub outputs
-          "app_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "consumer_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "ui_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "short_sha=${SHORT_SHA}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "app_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "consumer_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "ui_image_tag=${IMAGE_TAG}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "short_sha=${SHORT_SHA}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           
           Write-Host "Generated image tags:"
           Write-Host "  App: ${IMAGE_TAG}"
@@ -63,23 +68,26 @@ jobs:
           Write-Host "  UI: ${IMAGE_TAG}"
 
       - name: Build Docker images
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "Building Docker images..."
           
           # Build app
           Write-Host "Building my-tiny-app..."
           docker build -t localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }} ./my-tiny-app
+          if ($LASTEXITCODE -ne 0) { exit 1 }
           docker tag localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }} localhost/my-tiny-app:${ENVIRONMENT}-latest
           
           # Build consumer
           Write-Host "Building my-tiny-app-consumer..."
           docker build -t localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }} ./my-tiny-app-consumer
+          if ($LASTEXITCODE -ne 0) { exit 1 }
           docker tag localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }} localhost/my-tiny-app-consumer:${ENVIRONMENT}-latest
           
           # Build UI
           Write-Host "Building my-tiny-app-ui..."
           docker build -t localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }} ./my-tiny-app-ui
+          if ($LASTEXITCODE -ne 0) { exit 1 }
           docker tag localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }} localhost/my-tiny-app-ui:${ENVIRONMENT}-latest
           
           Write-Host "✅ All images built successfully"
@@ -114,26 +122,28 @@ jobs:
           terraform init
 
       - name: Terraform Plan - Services
+        shell: powershell
         working-directory: terraform/localstack/environments/${{ env.ENVIRONMENT }}/services
         run: |
-          terraform plan \
-            -var="app_image_tag=${{ steps.image-tags.outputs.app_image_tag }}" \
-            -var="consumer_image_tag=${{ steps.image-tags.outputs.consumer_image_tag }}" \
-            -var="ui_image_tag=${{ steps.image-tags.outputs.ui_image_tag }}" \
+          terraform plan `
+            -var="app_image_tag=${{ steps.image-tags.outputs.app_image_tag }}" `
+            -var="consumer_image_tag=${{ steps.image-tags.outputs.consumer_image_tag }}" `
+            -var="ui_image_tag=${{ steps.image-tags.outputs.ui_image_tag }}" `
             -out=tfplan
 
       - name: Terraform Apply - Services
         if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+        shell: powershell
         working-directory: terraform/localstack/environments/${{ env.ENVIRONMENT }}/services
         run: |
           terraform apply -auto-approve tfplan
           
           # Show outputs
-          echo "Deployment outputs:"
+          Write-Host "Deployment outputs:"
           terraform output
 
       - name: Verify deployment
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "Verifying deployment..."
           Start-Sleep -Seconds 10
@@ -145,13 +155,17 @@ jobs:
             --query "Reservations[*].Instances[*].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0]]" `
             --output table
           
-          Write-Host "✅ Deployment verification completed"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "⚠️ Warning: Could not verify EC2 instances"
+          } else {
+            Write-Host "✅ Deployment verification completed"
+          }
 
       - name: Deployment summary
         if: always()
-        shell: pwsh
+        shell: powershell
         run: |
-          @"
+          $summary = @"
           ## Deployment Summary
 
           **Environment:** ${{ env.ENVIRONMENT }}
@@ -162,5 +176,6 @@ jobs:
           - App: ``localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }}``
           - Consumer: ``localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }}``
           - UI: ``localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }}``
-          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+          "@
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
 
