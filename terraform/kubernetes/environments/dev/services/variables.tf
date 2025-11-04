@@ -1,10 +1,5 @@
 variable "environment" {
-  description = "Environment name (dev, stg, prod)"
-  type        = string
-}
-
-variable "namespace" {
-  description = "Kubernetes namespace"
+  description = "Environment name"
   type        = string
 }
 
@@ -19,7 +14,7 @@ variable "docker_registry" {
 }
 
 variable "image_tag" {
-  description = "Docker image tag"
+  description = "Docker image tag (usually from CI/CD)"
   type        = string
 }
 
@@ -82,19 +77,6 @@ variable "ui_resources" {
       memory = string
       cpu    = string
     })
-  })
-}
-
-variable "config" {
-  description = "ConfigMap values"
-  type = object({
-    NODE_ENV       = string
-    MONGODB_URI    = string
-    KAFKA_BROKER   = string
-    KAFKA_TOPIC    = string
-    KAFKA_GROUP_ID = string
-    APP_API_URL   = string
-    API_URL       = string
   })
 }
 

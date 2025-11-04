@@ -1,107 +1,133 @@
 # Terraform Multi-Environment Setup
 
-Cấu trúc này tương tự như Kustomize overlays, cho phép tách biệt environment (dev, stg) với shared base module.
+Cấu trúc này tách biệt **Infrastructure** (deploy một lần) và **Services** (deploy khi code thay đổi).
 
 ## 📁 Cấu trúc
 
 ```
 terraform/kubernetes/
 ├── modules/
-│   └── app/              # Base module (shared code - tương tự k8s/base/)
-│       ├── main.tf       # Shared resources
-│       ├── variables.tf
-│       └── outputs.tf
+│   ├── infrastructure/    # MongoDB, Kafka, Zookeeper
+│   └── services/         # App, Consumer, UI
 │
-└── environments/         # Environment-specific configs (tương tự k8s/overlays/)
+└── environments/
     ├── dev/
-    │   ├── main.tf          # Calls base module
-    │   ├── variables.tf     # Variable definitions
-    │   └── terraform.tfvars # Dev-specific values
+    │   ├── infrastructure/    # Deploy once
+    │   │   ├── main.tf
+    │   │   ├── variables.tf
+    │   │   ├── versions.tf
+    │   │   └── terraform.tfvars
+    │   │
+    │   └── services/          # Deploy on code changes
+    │       ├── main.tf
+    │       ├── variables.tf
+    │       ├── versions.tf
+    │       └── terraform.tfvars
     │
     └── stg/
-        ├── main.tf          # Calls base module
-        ├── variables.tf     # Variable definitions
-        └── terraform.tfvars # Stg-specific values
+        ├── infrastructure/
+        └── services/
 ```
 
-## 🚀 Cách sử dụng
+## 🚀 Workflow
 
-### Deploy to Dev
-
-```bash
-cd terraform/kubernetes/environments/dev
-terraform init
-terraform plan
-terraform apply
-```
-
-### Deploy to Staging
-
-```bash
-cd terraform/kubernetes/environments/stg
-terraform init
-terraform plan
-terraform apply
-```
-
-### Destroy
+### 1. Deploy Infrastructure (Một lần)
 
 ```bash
 # Dev
-cd terraform/kubernetes/environments/dev
-terraform destroy
+cd terraform/kubernetes/environments/dev/infrastructure
+terraform init
+terraform apply
 
 # Staging
-cd terraform/kubernetes/environments/stg
-terraform destroy
+cd terraform/kubernetes/environments/stg/infrastructure
+terraform init
+terraform apply
 ```
 
-## 🔍 Sự khác biệt giữa Dev và Stg
-
-| Feature | Dev | Stg |
-|---------|-----|-----|
-| **Namespace** | `my-tiny-app-dev` | `my-tiny-app-stg` |
-| **Name Prefix** | `dev-` | `stg-` |
-| **Replicas** | 1 | 2 |
-| **App Resources** | 64-128Mi, 50-100m | 256-512Mi, 200-400m |
-| **UI Resources** | 128-256Mi, 50-100m | 512Mi-1Gi, 200-400m |
-| **NODE_ENV** | `development` | `staging` |
-| **Image Tags** | `dev-latest` | `stg-latest` |
-| **Kafka Topic** | `item-events-dev` | `item-events-stg` |
-| **MongoDB URI** | `mongodb://dev-mongodb:27017/my-tiny-app-dev` | `mongodb://stg-mongodb:27017/my-tiny-app-stg` |
-
-## 📝 So sánh với Kustomize
-
-| Kustomize | Terraform |
-|-----------|-----------|
-| `k8s/base/` | `terraform/kubernetes/modules/app/` |
-| `k8s/overlays/dev/` | `terraform/kubernetes/environments/dev/` |
-| `k8s/overlays/stg/` | `terraform/kubernetes/environments/stg/` |
-| `kubectl apply -k` | `terraform apply` |
-| `kubectl kustomize` | `terraform plan` |
-| `patchesStrategicMerge` | `terraform.tfvars` với variables |
-
-## 🎯 Ưu điểm
-
-1. **State Management**: Mỗi environment có state riêng
-2. **Variables**: Dễ quản lý config qua tfvars
-3. **Modules**: Code reuse, DRY principle
-4. **Terraform Features**: State locking, remote state, workspaces
-5. **Type Safety**: Terraform validate variables
-
-## 📋 Module Resources
-
-Module `modules/app/` bao gồm:
+Infrastructure bao gồm:
 - ✅ Namespace
 - ✅ ConfigMap
 - ✅ MongoDB (StatefulSet + Services)
 - ✅ Zookeeper (Deployment + Service)
 - ✅ Kafka (Deployment + Service)
+
+### 2. Deploy Services (Khi code thay đổi)
+
+```bash
+# Dev - Deploy sau khi merge code vào dev branch
+cd terraform/kubernetes/environments/dev/services
+terraform init
+terraform apply -var="image_tag=dev-$(git rev-parse --short HEAD)"
+
+# Staging - Deploy sau khi merge code vào stg branch
+cd terraform/kubernetes/environments/stg/services
+terraform init
+terraform apply -var="image_tag=stg-$(git rev-parse --short HEAD)"
+```
+
+Services bao gồm:
 - ✅ App (Deployment + Service)
 - ✅ Consumer (Deployment + Service)
 - ✅ UI (Deployment + Service)
 
-Tất cả resources đều:
-- Dùng `name_prefix` để tách biệt environment
-- Dùng variables cho replicas và resources
-- Có labels để filter theo environment
+## 🔗 Services Reference Infrastructure
+
+Services module sử dụng `terraform_remote_state` để lấy thông tin từ infrastructure:
+
+- Namespace name
+- ConfigMap name
+- Service names (MongoDB, Kafka)
+
+## 📊 State Management
+
+Mỗi environment có **2 state files riêng biệt**:
+
+- `dev/infrastructure/terraform.tfstate` - Infrastructure state
+- `dev/services/terraform.tfstate` - Services state
+
+Điều này cho phép:
+- ✅ Deploy infrastructure một lần
+- ✅ Deploy services nhiều lần khi code thay đổi
+- ✅ Không ảnh hưởng infrastructure khi update services
+
+## 🔄 CI/CD Integration
+
+### GitHub Actions Workflow
+
+```yaml
+# Deploy Infrastructure (chạy một lần khi setup)
+- name: Deploy Infrastructure
+  run: |
+    cd terraform/kubernetes/environments/${{ env.ENVIRONMENT }}/infrastructure
+    terraform init
+    terraform apply -auto-approve
+
+# Build và Deploy Services (chạy khi merge code)
+- name: Build and Push Docker Images
+  run: |
+    docker build -t my-registry/my-tiny-app:${{ github.sha }} ./my-tiny-app
+    docker push my-registry/my-tiny-app:${{ github.sha }}
+
+- name: Deploy Services
+  run: |
+    cd terraform/kubernetes/environments/${{ env.ENVIRONMENT }}/services
+    terraform init
+    terraform apply -auto-approve \
+      -var="image_tag=${{ github.sha }}"
+```
+
+## 🎯 Lợi ích
+
+1. **Tách biệt rõ ràng**: Infrastructure vs Services
+2. **State isolation**: Mỗi phần có state riêng
+3. **CI/CD friendly**: Deploy services khi code thay đổi
+4. **Infrastructure stability**: Infrastructure không bị ảnh hưởng khi update services
+5. **Flexibility**: Có thể update services mà không touch infrastructure
+
+## 📝 Notes
+
+- Infrastructure phải được deploy **trước** services
+- Services sử dụng `terraform_remote_state` để reference infrastructure
+- Image tags được update bởi CI/CD pipeline
+- Có thể dùng remote backend (S3) thay vì local state

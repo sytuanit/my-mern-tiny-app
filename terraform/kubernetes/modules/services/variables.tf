@@ -4,12 +4,17 @@ variable "environment" {
 }
 
 variable "namespace" {
-  description = "Kubernetes namespace"
+  description = "Kubernetes namespace (from infrastructure)"
   type        = string
 }
 
 variable "name_prefix" {
   description = "Prefix for resource names"
+  type        = string
+}
+
+variable "configmap_name" {
+  description = "ConfigMap name (from infrastructure)"
   type        = string
 }
 
@@ -82,19 +87,6 @@ variable "ui_resources" {
       memory = string
       cpu    = string
     })
-  })
-}
-
-variable "config" {
-  description = "ConfigMap values"
-  type = object({
-    NODE_ENV       = string
-    MONGODB_URI    = string
-    KAFKA_BROKER   = string
-    KAFKA_TOPIC    = string
-    KAFKA_GROUP_ID = string
-    APP_API_URL   = string
-    API_URL       = string
   })
 }
 

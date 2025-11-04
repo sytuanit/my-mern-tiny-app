@@ -1,5 +1,5 @@
-# Base Module - Shared Kubernetes Resources
-# Similar to k8s/base/ in Kustomize
+# Services Module - App, Consumer, UI
+# Deploy when code changes (on merge to dev/stg branches)
 
 terraform {
   required_version = ">= 1.0"
@@ -17,355 +17,11 @@ provider "kubernetes" {
   config_context = var.kube_context
 }
 
-# Namespace
-resource "kubernetes_namespace" "app_namespace" {
+# Data source để reference ConfigMap từ infrastructure
+data "kubernetes_config_map" "app_config" {
   metadata {
-    name = var.namespace
-    labels = {
-      name        = var.namespace
-      environment = var.environment
-    }
-  }
-}
-
-# ConfigMap
-resource "kubernetes_config_map" "app_config" {
-  metadata {
-    name      = "${var.name_prefix}app-config"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
-    labels = {
-      environment = var.environment
-    }
-  }
-
-  data = {
-    MONGODB_URI       = var.config.MONGODB_URI
-    KAFKA_BROKER     = var.config.KAFKA_BROKER
-    KAFKA_TOPIC      = var.config.KAFKA_TOPIC
-    KAFKA_GROUP_ID   = var.config.KAFKA_GROUP_ID
-    APP_API_URL      = var.config.APP_API_URL
-    API_URL          = var.config.API_URL
-    NODE_ENV         = var.config.NODE_ENV
-    PORT_APP         = "3000"
-    PORT_CONSUMER    = "3001"
-    PORT_UI          = "3002"
-  }
-}
-
-# MongoDB StatefulSet
-resource "kubernetes_stateful_set" "mongodb" {
-  metadata {
-    name      = "${var.name_prefix}mongodb"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
-    labels = {
-      app         = "mongodb"
-      environment = var.environment
-    }
-  }
-
-  spec {
-    service_name = "${var.name_prefix}mongodb-headless"
-    replicas     = 1
-
-    selector {
-      match_labels = {
-        app = "mongodb"
-      }
-    }
-
-    template {
-      metadata {
-        labels = {
-          app = "mongodb"
-        }
-      }
-
-      spec {
-        container {
-          name  = "mongodb"
-          image = "mongo:7.0"
-
-          port {
-            container_port = 27017
-            name          = "mongodb"
-          }
-
-          env {
-            name  = "MONGO_INITDB_DATABASE"
-            value = var.namespace
-          }
-
-          volume_mount {
-            name       = "mongodb-data"
-            mount_path = "/data/db"
-          }
-        }
-      }
-    }
-
-    volume_claim_template {
-      metadata {
-        name = "mongodb-data"
-      }
-
-      spec {
-        access_modes = ["ReadWriteOnce"]
-        resources {
-          requests = {
-            storage = "1Gi"
-          }
-        }
-      }
-    }
-  }
-}
-
-# MongoDB Service
-resource "kubernetes_service" "mongodb" {
-  metadata {
-    name      = "${var.name_prefix}mongodb"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
-    labels = {
-      app         = "mongodb"
-      environment = var.environment
-    }
-  }
-
-  spec {
-    type = "ClusterIP"
-
-    port {
-      port        = 27017
-      target_port = 27017
-      protocol    = "TCP"
-      name        = "mongodb"
-    }
-
-    selector = {
-      app = "mongodb"
-    }
-  }
-}
-
-# MongoDB Headless Service
-resource "kubernetes_service" "mongodb_headless" {
-  metadata {
-    name      = "${var.name_prefix}mongodb-headless"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
-    labels = {
-      app         = "mongodb"
-      environment = var.environment
-    }
-  }
-
-  spec {
-    cluster_ip = "None"
-
-    port {
-      port        = 27017
-      target_port = 27017
-      protocol    = "TCP"
-      name        = "mongodb"
-    }
-
-    selector = {
-      app = "mongodb"
-    }
-  }
-}
-
-# Zookeeper Deployment
-resource "kubernetes_deployment" "zookeeper" {
-  metadata {
-    name      = "${var.name_prefix}zookeeper"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
-    labels = {
-      app         = "zookeeper"
-      environment = var.environment
-    }
-  }
-
-  spec {
-    replicas = 1
-
-    selector {
-      match_labels = {
-        app = "zookeeper"
-      }
-    }
-
-    template {
-      metadata {
-        labels = {
-          app = "zookeeper"
-        }
-      }
-
-      spec {
-        container {
-          name  = "zookeeper"
-          image = "confluentinc/cp-zookeeper:latest"
-
-          port {
-            container_port = 2181
-            name          = "zookeeper"
-          }
-
-          env {
-            name  = "ZOOKEEPER_CLIENT_PORT"
-            value = "2181"
-          }
-
-          env {
-            name  = "ZOOKEEPER_TICK_TIME"
-            value = "2000"
-          }
-        }
-      }
-    }
-  }
-}
-
-# Zookeeper Service
-resource "kubernetes_service" "zookeeper" {
-  metadata {
-    name      = "${var.name_prefix}zookeeper"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
-    labels = {
-      app         = "zookeeper"
-      environment = var.environment
-    }
-  }
-
-  spec {
-    type = "ClusterIP"
-
-    port {
-      port        = 2181
-      target_port = 2181
-      protocol    = "TCP"
-      name        = "zookeeper"
-    }
-
-    selector = {
-      app = "zookeeper"
-    }
-  }
-}
-
-# Kafka Deployment
-resource "kubernetes_deployment" "kafka" {
-  metadata {
-    name      = "${var.name_prefix}kafka"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
-    labels = {
-      app         = "kafka"
-      environment = var.environment
-    }
-  }
-
-  spec {
-    replicas = 1
-
-    selector {
-      match_labels = {
-        app = "kafka"
-      }
-    }
-
-    template {
-      metadata {
-        labels = {
-          app = "kafka"
-        }
-      }
-
-      spec {
-        container {
-          name  = "kafka"
-          image = "confluentinc/cp-kafka:7.5.0"
-
-          port {
-            container_port = 9092
-            name          = "kafka-external"
-          }
-
-          port {
-            container_port = 9093
-            name          = "kafka-internal"
-          }
-
-          env {
-            name  = "KAFKA_BROKER_ID"
-            value = "1"
-          }
-
-          env {
-            name  = "KAFKA_ZOOKEEPER_CONNECT"
-            value = "${var.name_prefix}zookeeper:2181"
-          }
-
-          env {
-            name  = "KAFKA_ADVERTISED_LISTENERS"
-            value = "PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://${var.name_prefix}kafka:9093"
-          }
-
-          env {
-            name  = "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP"
-            value = "PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT"
-          }
-
-          env {
-            name  = "KAFKA_INTER_BROKER_LISTENER_NAME"
-            value = "PLAINTEXT_INTERNAL"
-          }
-
-          env {
-            name  = "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR"
-            value = "1"
-          }
-
-          env {
-            name  = "KAFKA_AUTO_CREATE_TOPICS_ENABLE"
-            value = "true"
-          }
-        }
-      }
-    }
-  }
-}
-
-# Kafka Service
-resource "kubernetes_service" "kafka" {
-  metadata {
-    name      = "${var.name_prefix}kafka"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
-    labels = {
-      app         = "kafka"
-      environment = var.environment
-    }
-  }
-
-  spec {
-    type = "ClusterIP"
-
-    port {
-      port        = 9092
-      target_port = 9092
-      protocol    = "TCP"
-      name        = "kafka-external"
-    }
-
-    port {
-      port        = 9093
-      target_port = 9093
-      protocol    = "TCP"
-      name        = "kafka-internal"
-    }
-
-    selector = {
-      app = "kafka"
-    }
+    name      = var.configmap_name
+    namespace = var.namespace
   }
 }
 
@@ -373,10 +29,11 @@ resource "kubernetes_service" "kafka" {
 resource "kubernetes_deployment" "app" {
   metadata {
     name      = "${var.name_prefix}my-tiny-app"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
+    namespace = var.namespace
     labels = {
       app         = "my-tiny-app"
       environment = var.environment
+      component   = "service"
     }
   }
 
@@ -411,7 +68,7 @@ resource "kubernetes_deployment" "app" {
             name = "PORT"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "PORT_APP"
               }
             }
@@ -421,7 +78,7 @@ resource "kubernetes_deployment" "app" {
             name = "MONGODB_URI"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "MONGODB_URI"
               }
             }
@@ -431,7 +88,7 @@ resource "kubernetes_deployment" "app" {
             name = "KAFKA_BROKER"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "KAFKA_BROKER"
               }
             }
@@ -441,7 +98,7 @@ resource "kubernetes_deployment" "app" {
             name = "KAFKA_TOPIC"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "KAFKA_TOPIC"
               }
             }
@@ -451,7 +108,7 @@ resource "kubernetes_deployment" "app" {
             name = "NODE_ENV"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "NODE_ENV"
               }
             }
@@ -495,10 +152,11 @@ resource "kubernetes_deployment" "app" {
 resource "kubernetes_service" "app" {
   metadata {
     name      = "${var.name_prefix}my-tiny-app-service"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
+    namespace = var.namespace
     labels = {
       app         = "my-tiny-app"
       environment = var.environment
+      component   = "service"
     }
   }
 
@@ -522,10 +180,11 @@ resource "kubernetes_service" "app" {
 resource "kubernetes_deployment" "consumer" {
   metadata {
     name      = "${var.name_prefix}my-tiny-app-consumer"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
+    namespace = var.namespace
     labels = {
       app         = "my-tiny-app-consumer"
       environment = var.environment
+      component   = "service"
     }
   }
 
@@ -560,7 +219,7 @@ resource "kubernetes_deployment" "consumer" {
             name = "PORT"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "PORT_CONSUMER"
               }
             }
@@ -570,7 +229,7 @@ resource "kubernetes_deployment" "consumer" {
             name = "MONGODB_URI"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "MONGODB_URI"
               }
             }
@@ -580,7 +239,7 @@ resource "kubernetes_deployment" "consumer" {
             name = "KAFKA_BROKER"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "KAFKA_BROKER"
               }
             }
@@ -590,7 +249,7 @@ resource "kubernetes_deployment" "consumer" {
             name = "KAFKA_TOPIC"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "KAFKA_TOPIC"
               }
             }
@@ -600,7 +259,7 @@ resource "kubernetes_deployment" "consumer" {
             name = "KAFKA_GROUP_ID"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "KAFKA_GROUP_ID"
               }
             }
@@ -610,7 +269,7 @@ resource "kubernetes_deployment" "consumer" {
             name = "MY_TINY_APP_API_URL"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "APP_API_URL"
               }
             }
@@ -620,7 +279,7 @@ resource "kubernetes_deployment" "consumer" {
             name = "NODE_ENV"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "NODE_ENV"
               }
             }
@@ -664,10 +323,11 @@ resource "kubernetes_deployment" "consumer" {
 resource "kubernetes_service" "consumer" {
   metadata {
     name      = "${var.name_prefix}my-tiny-app-consumer-service"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
+    namespace = var.namespace
     labels = {
       app         = "my-tiny-app-consumer"
       environment = var.environment
+      component   = "service"
     }
   }
 
@@ -691,10 +351,11 @@ resource "kubernetes_service" "consumer" {
 resource "kubernetes_deployment" "ui" {
   metadata {
     name      = "${var.name_prefix}my-tiny-app-ui"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
+    namespace = var.namespace
     labels = {
       app         = "my-tiny-app-ui"
       environment = var.environment
+      component   = "service"
     }
   }
 
@@ -729,7 +390,7 @@ resource "kubernetes_deployment" "ui" {
             name = "PORT"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "PORT_UI"
               }
             }
@@ -739,7 +400,7 @@ resource "kubernetes_deployment" "ui" {
             name = "NEXT_PUBLIC_API_URL"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "API_URL"
               }
             }
@@ -749,7 +410,7 @@ resource "kubernetes_deployment" "ui" {
             name = "API_URL"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "API_URL"
               }
             }
@@ -759,7 +420,7 @@ resource "kubernetes_deployment" "ui" {
             name = "NODE_ENV"
             value_from {
               config_map_key_ref {
-                name = kubernetes_config_map.app_config.metadata[0].name
+                name = data.kubernetes_config_map.app_config.metadata[0].name
                 key  = "NODE_ENV"
               }
             }
@@ -803,10 +464,11 @@ resource "kubernetes_deployment" "ui" {
 resource "kubernetes_service" "ui" {
   metadata {
     name      = "${var.name_prefix}my-tiny-app-ui-service"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
+    namespace = var.namespace
     labels = {
       app         = "my-tiny-app-ui"
       environment = var.environment
+      component   = "service"
     }
   }
 

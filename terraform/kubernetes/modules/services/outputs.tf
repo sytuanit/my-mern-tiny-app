@@ -1,8 +1,3 @@
-output "namespace" {
-  description = "Kubernetes namespace"
-  value       = kubernetes_namespace.app_namespace.metadata[0].name
-}
-
 output "app_service_name" {
   description = "App service name"
   value       = kubernetes_service.app.metadata[0].name

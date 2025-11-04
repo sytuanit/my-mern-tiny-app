@@ -1,13 +1,13 @@
-# Example Terraform variables for Dev environment
-# Copy this file to terraform.tfvars and fill in your values
+# Example Services Configuration - Dev Environment
+# Copy to terraform.tfvars and fill in your values
+# CI/CD will update image_tag automatically
 
 environment = "dev"
-namespace   = "my-tiny-app-dev"
 name_prefix = "dev-"
 
-# Image configuration
+# Image configuration (updated by CI/CD)
 docker_registry  = "localhost"
-image_tag        = "dev-latest"
+image_tag        = "dev-latest"  # CI/CD will update this
 image_pull_policy = "Never"
 
 # Replicas
@@ -47,17 +47,6 @@ ui_resources = {
     memory = "256Mi"
     cpu    = "100m"
   }
-}
-
-# ConfigMap values
-config = {
-  NODE_ENV         = "development"
-  MONGODB_URI      = "mongodb://dev-mongodb:27017/my-tiny-app-dev"
-  KAFKA_BROKER     = "dev-kafka:9093"
-  KAFKA_TOPIC      = "item-events-dev"
-  KAFKA_GROUP_ID   = "my-tiny-app-consumer-group-dev"
-  APP_API_URL      = "http://dev-my-tiny-app-service:3000"
-  API_URL          = "http://dev-my-tiny-app-service:3000"
 }
 
 # Kubernetes context

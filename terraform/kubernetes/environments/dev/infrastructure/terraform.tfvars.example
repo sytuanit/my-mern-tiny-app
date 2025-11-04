@@ -1,0 +1,22 @@
+# Example Infrastructure Configuration - Dev Environment
+# Copy to terraform.tfvars and fill in your values
+
+environment = "dev"
+namespace   = "my-tiny-app-dev"
+name_prefix = "dev-"
+
+# ConfigMap values
+config = {
+  NODE_ENV         = "development"
+  MONGODB_URI      = "mongodb://dev-mongodb:27017/my-tiny-app-dev"
+  KAFKA_BROKER     = "dev-kafka:9093"
+  KAFKA_TOPIC      = "item-events-dev"
+  KAFKA_GROUP_ID   = "my-tiny-app-consumer-group-dev"
+  APP_API_URL      = "http://dev-my-tiny-app-service:3000"
+  API_URL          = "http://dev-my-tiny-app-service:3000"
+}
+
+# Kubernetes context
+kubeconfig_path = ""
+kube_context    = "minikube"
+
