@@ -1,0 +1,152 @@
+name: Deploy to LocalStack EC2 (Dev)
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+    types: [closed]
+  workflow_dispatch:
+
+env:
+  TERRAFORM_VERSION: 1.6.0
+  ENVIRONMENT: dev
+  AWS_REGION: us-east-1
+  LOCALSTACK_ENDPOINT: http://localhost:4567
+
+jobs:
+  deploy:
+    name: Build and Deploy to LocalStack EC2
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Check LocalStack health
+        run: |
+          echo "Checking LocalStack health..."
+          curl -f http://localhost:4567/_localstack/health || exit 1
+          echo "✅ LocalStack is running"
+
+      - name: Generate image tags
+        id: image-tags
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          IMAGE_TAG="${ENVIRONMENT}-${SHORT_SHA}-${TIMESTAMP}"
+          
+          echo "app_image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "consumer_image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "ui_image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          
+          echo "Generated image tags:"
+          echo "  App: ${IMAGE_TAG}"
+          echo "  Consumer: ${IMAGE_TAG}"
+          echo "  UI: ${IMAGE_TAG}"
+
+      - name: Build Docker images
+        run: |
+          echo "Building Docker images..."
+          
+          # Build app
+          echo "Building my-tiny-app..."
+          docker build -t localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }} ./my-tiny-app
+          docker tag localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }} localhost/my-tiny-app:${ENVIRONMENT}-latest
+          
+          # Build consumer
+          echo "Building my-tiny-app-consumer..."
+          docker build -t localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }} ./my-tiny-app-consumer
+          docker tag localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }} localhost/my-tiny-app-consumer:${ENVIRONMENT}-latest
+          
+          # Build UI
+          echo "Building my-tiny-app-ui..."
+          docker build -t localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }} ./my-tiny-app-ui
+          docker tag localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }} localhost/my-tiny-app-ui:${ENVIRONMENT}-latest
+          
+          echo "✅ All images built successfully"
+          
+          # List images
+          docker images | grep "localhost/my-tiny-app"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init - Infrastructure
+        working-directory: terraform/localstack/environments/${{ env.ENVIRONMENT }}/infrastructure
+        run: |
+          terraform init
+
+      - name: Terraform Plan - Infrastructure
+        working-directory: terraform/localstack/environments/${{ env.ENVIRONMENT }}/infrastructure
+        run: |
+          terraform plan -out=tfplan
+
+      - name: Terraform Apply - Infrastructure
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+        working-directory: terraform/localstack/environments/${{ env.ENVIRONMENT }}/infrastructure
+        run: |
+          terraform apply -auto-approve tfplan
+
+      - name: Terraform Init - Services
+        working-directory: terraform/localstack/environments/${{ env.ENVIRONMENT }}/services
+        run: |
+          terraform init
+
+      - name: Terraform Plan - Services
+        working-directory: terraform/localstack/environments/${{ env.ENVIRONMENT }}/services
+        run: |
+          terraform plan \
+            -var="app_image_tag=${{ steps.image-tags.outputs.app_image_tag }}" \
+            -var="consumer_image_tag=${{ steps.image-tags.outputs.consumer_image_tag }}" \
+            -var="ui_image_tag=${{ steps.image-tags.outputs.ui_image_tag }}" \
+            -out=tfplan
+
+      - name: Terraform Apply - Services
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+        working-directory: terraform/localstack/environments/${{ env.ENVIRONMENT }}/services
+        run: |
+          terraform apply -auto-approve tfplan
+          
+          # Show outputs
+          echo "Deployment outputs:"
+          terraform output
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying deployment..."
+          sleep 10
+          
+          # Check EC2 instances
+          aws --endpoint-url=${{ env.LOCALSTACK_ENDPOINT }} ec2 describe-instances \
+            --region ${{ env.AWS_REGION }} \
+            --filters "Name=tag:Name,Values=dev-my-tiny-app-server" \
+            --query "Reservations[*].Instances[*].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0]]" \
+            --output table
+          
+          echo "✅ Deployment verification completed"
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ steps.image-tags.outputs.short_sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image Tag:** ${{ steps.image-tags.outputs.app_image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployed Images:" >> $GITHUB_STEP_SUMMARY
+          echo "- App: \`localhost/my-tiny-app:${{ steps.image-tags.outputs.app_image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Consumer: \`localhost/my-tiny-app-consumer:${{ steps.image-tags.outputs.consumer_image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- UI: \`localhost/my-tiny-app-ui:${{ steps.image-tags.outputs.ui_image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+
