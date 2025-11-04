@@ -1,3 +1,4 @@
+# Test deploy
 name: Deploy to LocalStack EC2 (Dev)
 
 on:
